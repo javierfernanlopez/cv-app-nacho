@@ -1,0 +1,33 @@
+{
+  "emailPitchTemplates": {
+    "real_estate_valuation_advisory": {
+      "greeting": "Hola, {greetingTarget}:",
+      "body": "Os escribo directamente porque conozco vuestra actividad y posicionamiento en el sector de {companyCategory}.\n\nCuento con 5 años de trayectoria profesional en consultoría inmobiliaria en Savills, donde actualmente ejerzo como Consultor en Valoraciones, coordinando y ejecutando proyectos periciales y de tasación de carteras de inicio a fin: desde la inspección física in situ y la comprobación de comparables de mercado hasta el modelado financiero en Excel y la entrega a clientes institucionales y corporativos.\n\nGraduado en ADE por la Universidad de Málaga, cuento además con el Máster en Consultoría Estratégica por Savills University y el Máster GESCO en ESIC.\n\n{valueHook}\n\nOs adjunto mi CV con el detalle de mi experiencia. Quedo a vuestra disposición para mantener una breve conversación cuando tengáis disponibilidad.\n\nUn cordial saludo,\nIgnacio Fernández López\n+34 644 321 664 | ignflopez@gmail.com\nLinkedIn: https://www.linkedin.com/in/ignacio-fernandezlopez/"
+    },
+    "operations_project_management": {
+      "greeting": "Hola, {greetingTarget}:",
+      "body": "Me pongo en contacto con vosotros para presentar mi candidatura en relación a proyectos y operaciones en {companyCategory}.\n\nDurante 5 años en Savills he liderado la supervisión y ejecución operativa de proyectos de consultoría, coordinando cronogramas, cargas de trabajo y resolución ágil de contingencias sobre el terreno para garantizar entregas en plazos exigentes.\n\nPoseo titulación en ADE (UMA), Máster en Consultoría Estratégica (Savills University) y Máster GESCO (ESIC), aunando visión cuantitativa, control presupuestario y solvencia organizativa en entornos corporativos.\n\n{valueHook}\n\nAdjunto mi currículum en PDF para vuestra consideración y quedo a vuestra completa disposición.\n\nAtentamente,\nIgnacio Fernández López\n+34 644 321 664 | ignflopez@gmail.com\nLinkedIn: https://www.linkedin.com/in/ignacio-fernandezlopez/"
+    },
+    "market_research_expansion": {
+      "greeting": "Hola, {greetingTarget}:",
+      "body": "Os contacto para compartir mi trayectoria profesional en el sector de {companyCategory} en Málaga y Andalucía.\n\nAporto 5 años de experiencia en Savills, donde me especialicé en Market Research elaborando estudios de viabilidad comercial, seguimiento cuantitativo de demanda e informes sectoriales para orientar inversiones y expansión de negocio de promotores y fondos, complementado con mi rol en Valoraciones.\n\nSoy Graduado en ADE, Máster en Dirección de Marketing y Gestión Comercial (ESIC) y Máster en Consultoría Estratégica (Savills University).\n\n{valueHook}\n\nOs adjunto mi CV en PDF y quedo a vuestra total disposición para ampliar cualquier información.\n\nUn cordial saludo,\nIgnacio Fernández López\n+34 644 321 664 | ignflopez@gmail.com\nLinkedIn: https://www.linkedin.com/in/ignacio-fernandezlopez/"
+    },
+    "strategic_consulting_analyst": {
+      "greeting": "Hola, {greetingTarget}:",
+      "body": "Os escribo directamente para presentar mi perfil profesional con vistas a proyectos de asesoramiento estratégico y transacciones en {companyCategory}.\n\nCuento con 5 años de trayectoria en consultoría corporativa en Savills, abarcando modelado financiero en Excel, análisis pericial y valoración de carteras, estudios de viabilidad y reporting ejecutivo en PowerPoint para comités de dirección y clientes institucionales.\n\nCuento con doble postgrado (Máster en Consultoría Estratégica por Savills University y Máster GESCO en ESIC) y Grado en ADE por la UMA con estancia Erasmus en Lisboa.\n\n{valueHook}\n\nOs adjunto mi CV con el resumen de mi trayectoria. Si os encaja en vuestros planes de equipo, estaré encantado de mantener una llamada cuando os resulte oportuno.\n\nUn cordial saludo,\nIgnacio Fernández López\n+34 644 321 664 | ignflopez@gmail.com\nLinkedIn: https://www.linkedin.com/in/ignacio-fernandezlopez/"
+    }
+  },
+  "formalLetterTemplates": {
+    "default": {
+      "header": "A la atención de {companyName}\n{companyLocation}\nFecha: {currentDate}",
+      "subject": "Asunto: Presentación profesional — {targetRoleTitle}",
+      "intro": "Hola, equipo de {companyName}:",
+      "p1": "Me pongo en contacto con vosotros para presentar mi perfil profesional y trayectoria. Conozco de cerca vuestra sólida actividad en el sector de {companyCategory}, donde considero que mi experiencia en consultoría inmobiliaria, valoración pericial y análisis de mercado puede sumar solvencia y valor inmediato.",
+      "p2": "Durante los últimos 5 años en Savills he desarrollado mi carrera coordinando proyectos de valoración de carteras de inicio a fin (inspección técnica en campo, control de datos y modelado financiero) y elaborando estudios de viabilidad comercial y prospección sectorial para inversores corporativos en Andalucía.",
+      "p3": "Cuento con el Grado en Administración y Dirección de Empresas (ADE) por la Universidad de Málaga (con estancia internacional Erasmus en Lisboa), el Máster en Consultoría Estratégica por Savills University y el Máster en Dirección de Marketing y Gestión Comercial (GESCO) por ESIC.",
+      "p4": "{valueHook}",
+      "outro": "Agradeciendo de antemano su atención, quedo a su entera disposición para mantener una conversación inicial y ampliar los detalles de mi trayectoria.",
+      "signoff": "Atentamente,\n\nIgnacio Fernández López\n+34 644 321 664 | ignflopez@gmail.com\nLinkedIn: https://www.linkedin.com/in/ignacio-fernandezlopez/"
+    }
+  }
+}

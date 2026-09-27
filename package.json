@@ -1,0 +1,23 @@
+{
+  "name": "cv-app-nacho",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Suite de generación y gestión de CVs ATS y Cartas de Presentación a medida para Ignacio Fernández López (Nacho)",
+  "main": "server.js",
+  "scripts": {
+    "build": "node scripts/generate.js",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "cv",
+    "ats",
+    "real-estate",
+    "valuation",
+    "project-management",
+    "market-research",
+    "malaga",
+    "costa-del-sol"
+  ],
+  "author": "Ignacio Fernández López",
+  "license": "ISC"
+}

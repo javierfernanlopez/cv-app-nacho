@@ -1,0 +1,286 @@
+{
+  "personal": {
+    "name": "Ignacio Fernández López",
+    "location": "Málaga, España",
+    "availability": "Disponible para incorporación inmediata en Málaga capital y provincia (Carné B y vehículo propio)",
+    "phone": "+34 644 321 664",
+    "email": "ignflopez@gmail.com",
+    "linkedin": "https://www.linkedin.com/in/ignacio-fernandezlopez/",
+    "linkedinDisplay": "linkedin.com/in/ignacio-fernandezlopez",
+    "photo": "assets/foto.jpg"
+  },
+  "roles": {
+    "area_manager_retail_ops": {
+      "title": "Area Manager / Gerente de Zona Retail & Supermercados (Operaciones y Gestión de Red)",
+      "summary": "Graduado en Administración y Dirección de Empresas (ADE) por la Universidad de Málaga (con estancia internacional Erasmus en Lisboa), Máster GESCO en Dirección Comercial y Marketing por ESIC y Máster por Savills University. Con 5 años de trayectoria profesional coordinando equipos sobre el terreno, supervisión operativa de inicio a fin, auditoría exhaustiva en campo y seguimiento presupuestario riguroso de cuentas de explotación (P&L). Orientado a la gestión multi-tienda de supermercados y retail comercial: liderazgo cercano y motivación de personal de tienda, cumplimiento estricto de estándares operativos, optimización de márgenes y mermas, y aseguramiento de la excelencia en la experiencia de cliente en Málaga y provincia.",
+      "skillsCategories": [
+        {
+          "name": "Operaciones de Tienda & Gestión de Red (Multi-Unit)",
+          "items": "Supervisión y Auditoría Operativa de Red de Tiendas, Control de Estándares de Cadena, Gestión de Flujos de Stock y Reposición, Control de Mermas y Roturas, Cumplimiento de Procedimientos Operativos."
+        },
+        {
+          "name": "Liderazgo de Equipos & Gestión de Personas",
+          "items": "Liderazgo de Equipos de Tienda, Planificación y Optimización de Horarios y Turnos, Selección y Onboarding de Personal, Formación Continua, Motivación, Clima Laboral y Gestión de Conflictos."
+        },
+        {
+          "name": "Cuenta de Explotación & Análisis Numérico (P&L)",
+          "items": "Seguimiento de Cuenta de Resultados de Tienda (P&L), Control Presupuestario, Objetivos de Venta, Ticket Medio, Productividad Horaria, Análisis de Sensibilidad y Rentabilidad por Metro Cuadrado."
+        },
+        {
+          "name": "Herramientas & Habilidades Transversales",
+          "items": "Microsoft Excel Avanzado (Modelos Cuantitativos y Cuadros de Mando KPIs), ERPs de Gestión, Visitas Técnicas de Inspección en Campo, Carné de Conducir B (Movilidad en Málaga y Provincia), Español (Nativo), Inglés (B2)."
+        }
+      ]
+    },
+    "store_operations_manager": {
+      "title": "Director de Tienda / Responsable de Operaciones y Centro (Gran Distribución y Retail)",
+      "summary": "Profesional con sólida formación en ADE (Universidad de Málaga) y doble máster de postgrado (ESIC y Savills University), con 5 años de experiencia liderando la operativa diaria, organización de recursos humanos y seguimiento de objetivos de negocio. Orientado a la dirección integral de centros de retail y grandes superficies comerciales: dinamización comercial, gestión de equipos multidisciplinares, abastecimiento y logística de tienda, resolución ágil de incidencias y cumplimiento de planes de venta.",
+      "skillsCategories": [
+        {
+          "name": "Dirección de Centro & Operativa de Tienda",
+          "items": "Gestión Integral del Punto de Venta, Supervisión de Sala de Ventas, Logística y Recepción de Mercancías, Control de Inventario y Stock, Seguridad y Normativa en Tienda."
+        },
+        {
+          "name": "Gestión y Organización de Equipos",
+          "items": "Organización de Turnos y Cargas de Trabajo, Evaluación del Rendimiento, Clima Laboral, Desarrollo de Mandos Intermedios de Tienda, Fomento de la Cultura de Servicio."
+        },
+        {
+          "name": "Gestión Comercial & Cliente",
+          "items": "Merchandising Visual, Planogramas, Calidad de Atención al Cliente, Campañas Promocionales, Fidelización, Gestión Eficiente de Reclamaciones e Incidencias."
+        },
+        {
+          "name": "Control Financiero & Idiomas",
+          "items": "Control de Costes Operativos, Productividad, Facturación, Gestión Presupuestaria de Centro. Español (Nativo), Inglés (Intermedio Profesional / B2)."
+        }
+      ]
+    },
+    "people_talent_management": {
+      "title": "People & Talent Specialist / Responsable de Gestión de Personas y RRHH",
+      "summary": "Graduado en Administración y Dirección de Empresas (ADE) con Máster en Consultoría Estratégica (Savills University) y Máster GESCO (ESIC), con 5 años de trayectoria corporativa liderando la coordinación de equipos, planificación de cargas operativas e interlocución B2B con directores de área. Especializado en conectar las prioridades estratégicas del negocio con la gestión del capital humano, selección especializada, onboarding, desarrollo organizativo y aseguramiento de un clima laboral de alto rendimiento.",
+      "skillsCategories": [
+        {
+          "name": "Gestión de Personas & Talento",
+          "items": "Selección Especializada de Perfiles Técnicos y de Gestión, Onboarding Corporativo, Planes de Formación y Desarrollo, Evaluación del Desempeño, Clima Laboral y Fidelización."
+        },
+        {
+          "name": "Organización & Liderazgo de Equipos",
+          "items": "Coordinación de Equipos Multidisciplinares, Planificación y Balance de Cargas de Trabajo, Resolución de Conflictos, Comunicación Interna, Dinamización de Equipos."
+        },
+        {
+          "name": "Negocio & Gestión de Cuentas B2B",
+          "items": "Interlocución con Directores de Área y Gerencia, Definición de Perfiles y Requerimientos de Puesto, Indicadores de Personas (Rotación, Absentismo, Satisfacción, Eficiencia)."
+        },
+        {
+          "name": "Herramientas & Idiomas",
+          "items": "Microsoft Excel Avanzado (Modelos Cuantitativos y Cuadros de Mando KPIs de Personas), PowerPoint Ejecutivo, Office 365, Teams. Español (Nativo), Inglés (Intermedio Profesional / B2)."
+        }
+      ]
+    },
+    "business_operations_pm": {
+      "title": "Business Operations & Project Manager (Gestión Operativa de Empresas y Procesos)",
+      "summary": "Profesional en dirección operativa y gestión de proyectos con 5 años de experiencia en consultoría corporativa (Savills) gestionando procesos de inicio a fin. Graduado en ADE por la Universidad de Málaga y con doble máster directivo, destaca por su solvencia en planificación de cronogramas, coordinación de recursos, control presupuestario riguroso, estandarización de flujos de trabajo e interlocución continua con clientes corporativos para asegurar entregas en plazos exigentes.",
+      "skillsCategories": [
+        {
+          "name": "Operaciones & Gestión de Proyectos",
+          "items": "Gestión Integral de Proyectos (End-to-End), Planificación Operativa, Gestión de Cronogramas, Asignación de Recursos, Acuerdos de Nivel de Servicio (SLAs)."
+        },
+        {
+          "name": "Optimización de Procesos & Calidad",
+          "items": "Estandarización de Procesos Operativos, Control de Calidad de Entregables, Gestión de Incidencias Operativas, Mitigación de Desviaciones Temporales y de Costes."
+        },
+        {
+          "name": "Control de Gestión & Finanzas",
+          "items": "Seguimiento y Control Presupuestario, Análisis Numérico de Costes, Rentabilidad Operativa, Facturación y Reportes de Estado a Dirección."
+        },
+        {
+          "name": "Herramientas & Idiomas",
+          "items": "Microsoft Excel Avanzado (Formulación Compleja, Modelado y Seguimiento), PowerPoint Ejecutivo, Microsoft 365. Español (Nativo), Inglés (Intermedio Profesional / B2)."
+        }
+      ]
+    },
+    "business_development_expansion": {
+      "title": "Responsable de Expansión Comercial & Business Development (Desarrollo y Puntos de Venta)",
+      "summary": "Consultor de Desarrollo de Negocio y Cuentas Corporativas con Máster en Dirección de Marketing y Gestión Comercial (ESIC) y Grado en ADE (Universidad de Málaga). Con 5 años de experiencia en Savills asesorando a comités de dirección, inversores y empresas, está especializado en prospección de mercado, negociación B2B, estudios de viabilidad comercial y diseño de estrategias de expansión territorial en Málaga y Andalucía.",
+      "skillsCategories": [
+        {
+          "name": "Desarrollo de Negocio & Ventas B2B",
+          "items": "Prospección y Captación Corporativa, Negociación de Contratos y Acuerdos B2B, Gestión de Cuentas Clave (Key Account Management), Planes de Expansión Territorial."
+        },
+        {
+          "name": "Inteligencia de Mercado & Viabilidad",
+          "items": "Estudios de Viabilidad Comercial y Financiera, Análisis Sectoriales y Competitivos, Detección de Oportunidades de Entrada, Prospección de Ubicaciones Estratégicas."
+        },
+        {
+          "name": "Reporting Ejecutivo & Comunicación",
+          "items": "Elaboración de Propuestas de Valor Personalizadas, Informes de Viabilidad para Órganos de Decisión, Presentaciones Comerciales de Alto Impacto."
+        },
+        {
+          "name": "Herramientas & Idiomas",
+          "items": "Microsoft Excel Avanzado (Modelos de Viabilidad y Previsiones), PowerPoint de Dirección, Entorno Office 365. Español (Nativo), Inglés (Intermedio Profesional / B2)."
+        }
+      ]
+    },
+    "strategic_consulting_business": {
+      "title": "Consultor Estratégico & Analista de Negocio (Estrategia Corporativa, M&A y Finanzas)",
+      "summary": "Consultor de Estrategia y Negocio con doble titulación de postgrado (Máster en Consultoría Estratégica en Savills University y Máster GESCO en ESIC) y base analítica en ADE (Universidad de Málaga). Con 5 años de experiencia en consultoría corporativa, aporta sólida capacidad analítica, modelado cuantitativo en Excel, diagnóstico organizativo y solvencia en la elaboración y defensa de dictámenes para comités de dirección y toma de decisiones.",
+      "skillsCategories": [
+        {
+          "name": "Consultoría Estratégica & Negocio",
+          "items": "Consultoría Estratégica Corporativa, Diagnóstico de Negocio, Análisis Cuantitativo y Cualitativo, Asesoramiento en Toma de Decisiones de Inversión y Eficiencia."
+        },
+        {
+          "name": "Modelado Financiero & Análisis Numérico",
+          "items": "Modelado Financiero en Excel, Proyecciones Económicas, Análisis de Sensibilidad y Escenarios, Evaluación de Riesgos Financieros y Operativos."
+        },
+        {
+          "name": "Presentaciones Ejecutivas & Dirección",
+          "items": "Elaboración de Informes de Alta Dirección, Síntesis Visual de Métricas Complejas en PowerPoint, Interlocución C-Level y con Comités Directivos."
+        },
+        {
+          "name": "Idiomas & Formación Internacional",
+          "items": "Español (Nativo), Inglés (Intermedio Profesional / Programa Académico Internacional Erasmus en Lisboa, Portugal)."
+        }
+      ]
+    },
+    "real_estate_valuation_advisory": {
+      "title": "Consultor de Negocio Inmobiliario & Valuation (Real Estate Advisory)",
+      "summary": "Profesional en consultoría inmobiliaria y valoraciones con 5 años de trayectoria en Savills liderando proyectos periciales y de asesoramiento para clientes corporativos e institucionales en Andalucía y España. Especializado en análisis financiero, inspección técnica sobre el terreno, control de calidad de datos de mercado y elaboración de informes periciales y de valoración de carteras con máxima fiabilidad técnica.",
+      "skillsCategories": [
+        {
+          "name": "Valoración & Consultoría Inmobiliaria",
+          "items": "Valoración de Activos Inmobiliarios, Tasaciones Periciales, Inspección Técnica de Inmuebles en Campo, Verificación y Control de Calidad de Datos, Normativa ECO / RICS."
+        },
+        {
+          "name": "Análisis Financiero & Modelado",
+          "items": "Modelado Financiero en Excel Avanzado, Análisis de Rentabilidad (TIR, VAN, Cap Rates), Proyecciones de Flujos de Caja, Estudios de Sensibilidad, Seguimiento Presupuestario."
+        },
+        {
+          "name": "Gestión de Cuentas & Clientes",
+          "items": "Interlocución con Clientes Corporativos e Institucionales (B2B), Fondos de Inversión, Entidades Financieras, Promotores y SOCIMIs, Adaptación del Alcance a Objetivos de Negocio."
+        },
+        {
+          "name": "Herramientas & Idiomas",
+          "items": "Microsoft Excel Avanzado, PowerPoint Ejecutivo para Comités, Office 365, Teams. Español (Nativo), Inglés (Intermedio Profesional / B2)."
+        }
+      ]
+    }
+  },
+  "experience": [
+    {
+      "company": "Savills",
+      "location": "Málaga / Andalucía, España",
+      "role": "Consultor en Valoraciones y Operaciones",
+      "period": "Ene. 2024 – Actualidad",
+      "highlights": {
+        "area_manager_retail_ops": [
+          "Coordinación y supervisión operativa sobre el terreno de equipos de trabajo y asignación eficiente de cronogramas, garantizando el cumplimiento estricto de plazos y estándares de servicio en la provincia de Málaga.",
+          "Auditoría exhaustiva in situ, inspecciones técnicas en campo y control de calidad de instalaciones, procedimientos y datos económicos con máximo rigor analítico.",
+          "Control de costes operativos y seguimiento presupuestario de expedientes, analizando márgenes y optimizando la productividad y los tiempos de ciclo.",
+          "Interlocución directa con directores de área y responsables corporativos, resolviendo incidencias operativas de forma ágil y orientada a resultados."
+        ],
+        "store_operations_manager": [
+          "Planificación y gestión operativa de actividades en campo, asegurando la óptima asignación de recursos y el estricto cumplimiento de protocolos de calidad.",
+          "Supervisión y auditoría física de instalaciones sobre el terreno, verificando el estado de los activos, cumplimiento normativo y coherencia de datos.",
+          "Seguimiento económico de cuentas de resultados y control presupuestario de operaciones, identificando desviaciones y aplicando medidas correctoras inmediatas.",
+          "Gestión de relaciones continuadas con clientes corporativos de alta exigencia, asegurando la máxima satisfacción en los servicios prestados."
+        ],
+        "people_talent_management": [
+          "Coordinación y gestión operativa de equipos de trabajo en proyectos de valoración, planificando la asignación eficiente de cargas y asegurando el cumplimiento estricto de fechas de entrega.",
+          "Interlocución directa y continuada con directores de área y clientes corporativos, levantando necesidades técnicas, adaptando el alcance y garantizando la satisfacción del servicio.",
+          "Participación activa en el onboarding, acogida y capacitación técnica de nuevos consultores en metodologías de análisis cuantitativo y verificación de datos.",
+          "Supervisión del cumplimiento de acuerdos de nivel de servicio (SLAs), fomentando un entorno de trabajo colaborativo, riguroso y orientado a la excelencia organizativa."
+        ],
+        "business_operations_pm": [
+          "Supervisión y gestión integral de proyectos de inicio a fin, estableciendo cronogramas de hitos críticos y gestionando eficientemente los recursos asignados.",
+          "Coordinación operativa de calendarios y balance de cargas de trabajo asegurando el 100% de entregas en plazo bajo requerimientos de alta exigencia.",
+          "Estandarización de protocolos de verificación, aseguramiento de la calidad de datos y resolución ágil de incidencias técnicas y operativas sobre el terreno.",
+          "Control y seguimiento presupuestario de expedientes, optimizando los tiempos de ciclo y la rentabilidad de las asignaciones de consultoría."
+        ],
+        "business_development_expansion": [
+          "Gestión de relaciones de confianza a largo plazo con cuentas corporativas (B2B), fondos de inversión y directores generales de empresas clave.",
+          "Identificación de nuevas oportunidades de negocio y asesoramiento estratégico a clientes sobre tendencias del mercado y optimización de carteras.",
+          "Elaboración de propuestas personalizadas y presentaciones ejecutivas de alto impacto para comités de dirección y órganos de gobierno.",
+          "Supervisión de la calidad del servicio para fidelizar cuentas corporativas y generar recurrencia en contratos de consultoría."
+        ],
+        "strategic_consulting_business": [
+          "Modelado financiero avanzado y análisis cuantitativo de carteras para sustentar dictámenes económicos y asesoramiento estratégico a comités de inversión.",
+          "Elaboración de informes ejecutivos y dictámenes periciales con alto rigor metodológico para comités directivos y entidades financieras.",
+          "Identificación de factores de riesgo, sensibilidades financieras y drivers de rentabilidad en operaciones corporativas.",
+          "Consultoría personalizada a clientes institucionales orientada a optimizar el valor y rendimiento de su portfolio."
+        ],
+        "real_estate_valuation_advisory": [
+          "Gestión integral y ejecución operativa de proyectos de valoración de activos inmobiliarios, supervisando el ciclo completo desde la captación e inspección técnica en campo hasta el informe final.",
+          "Análisis financiero riguroso, verificación técnica y control de calidad de datos de mercado para sustentar tasaciones y dictámenes económicos de máxima fiabilidad.",
+          "Interlocución directa con clientes corporativos e institucionales, comprendiendo sus objetivos de inversión y adaptando el alcance técnico de cada proyecto a sus necesidades de negocio.",
+          "Coordinación de cronogramas y asignación de cargas de trabajo para asegurar entregas rigurosas en plazos ajustados y cumplimiento de acuerdos de servicio."
+        ]
+      }
+    },
+    {
+      "company": "Savills",
+      "location": "Málaga / Andalucía, España",
+      "role": "Consultor en Market Research",
+      "period": "Sept. 2021 – Dic. 2023 (~2 años y medio)",
+      "highlights": {
+        "all": [
+          "Elaboración de estudios de viabilidad comercial y análisis sectoriales en Andalucía para validar proyectos de inversión, desarrollo y expansión de negocio.",
+          "Seguimiento cuantitativo de indicadores macroeconómicos y tendencias del mercado para detectar oportunidades operativas de entrada y crecimiento empresarial.",
+          "Asesoramiento estratégico a fondos, promotores y empresas en la toma de decisiones para nuevas aperturas, selección de ubicaciones clave y reposicionamiento corporativo.",
+          "Diseño y presentación de informes ejecutivos periódicos para comités de dirección y reuniones comerciales de alto nivel."
+        ]
+      }
+    }
+  ],
+  "education": [
+    {
+      "degree": "Máster en Consultoría Estratégica",
+      "institution": "Savills University",
+      "location": "España",
+      "period": "Nov. 2025 – Jul. 2026",
+      "details": "Formación directiva especializada en formulación estratégica, análisis corporativo, resolución de problemas complejos y consultoría avanzada de negocio."
+    },
+    {
+      "degree": "Máster en Dirección de Marketing y Gestión Comercial (GESCO)",
+      "institution": "ESIC Business & Marketing School",
+      "location": "España",
+      "period": "Nov. 2020 – Sept. 2021",
+      "details": "Especialización en desarrollo comercial, investigación de mercados, negociación B2B, planes de expansión y gestión de cuentas corporativas."
+    },
+    {
+      "degree": "Grado en Administración y Dirección de Empresas (ADE)",
+      "institution": "Universidad de Málaga (UMA)",
+      "location": "Málaga, España",
+      "period": "Sept. 2015 – Jul. 2020",
+      "details": "Sólida base en economía, análisis financiero cuantitativo, contabilidad analítica, estadística aplicada y dirección de operaciones."
+    },
+    {
+      "degree": "Programa de Intercambio Académico Internacional (Erasmus+)",
+      "institution": "Universidade Lusíada de Lisboa",
+      "location": "Lisboa, Portugal",
+      "period": "Sept. 2018 – Jul. 2019",
+      "details": "Inmersión académica internacional en gestión empresarial, finanzas y operativa en entorno multicultural."
+    }
+  ],
+  "projects": [
+    {
+      "name": "Coordinación Operativa y Supervisión de Equipos — Savills",
+      "role": "Consultor de Operaciones y Valoraciones",
+      "summary": "Dirección operativa de expedientes de consultoría corporativa, coordinando equipos sobre el terreno, controlando plazos y asegurando calidad de servicio.",
+      "points": [
+        "Planificación y Cumplimiento: Gestión de plazos críticos con una tasa de cumplimiento del 100% en entregas corporativas en Málaga y Andalucía.",
+        "Auditoría en Campo: Supervisión técnica in situ, estandarización de procedimientos operativos y control de calidad de datos.",
+        "Eficiencia de Procesos: Implementación de plantillas cuantitativas en Excel para seguimiento de cargas de trabajo y control presupuestario."
+      ]
+    },
+    {
+      "name": "Estudios de Viabilidad Comercial y Prospección de Ubicaciones",
+      "role": "Consultor de Market Research — Savills",
+      "summary": "Desarrollo de modelos cuantitativos de viabilidad comercial y prospección sectorial para decisiones de inversión y expansión de puntos de venta.",
+      "points": [
+        "Modelos de Viabilidad en Excel: Parametrización de proyecciones demográficas, absorción de demanda y rentabilidades esperadas de locales.",
+        "Reporting Ejecutivo: Estructuración y diseño en PowerPoint de informes directivos con soporte gráfico para comités de dirección.",
+        "Inteligencia Competitiva: Monitorización continua de variables macroeconómicas y dinámicas del tejido empresarial andaluz."
+      ]
+    }
+  ]
+}
