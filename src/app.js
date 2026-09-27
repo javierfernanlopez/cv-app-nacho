@@ -48,7 +48,11 @@ const navTabButtons = document.querySelectorAll('.nav-tab-btn');
 // DOM Elements - Content Sheets
 const paperView = document.getElementById('paperView');
 const pitchView = document.getElementById('pitchView');
+const intelView = document.getElementById('intelView');
 const toastEl = document.getElementById('toast');
+
+// Cloud Sync Endpoint (Multi-device persistent sync)
+const CLOUD_SYNC_URL = 'https://api.restful-api.dev/objects/ff808181a09d98f701a0e4f51a0928e0';
 
 // Load Data with Zero-Fail Fallback
 async function init() {
@@ -76,6 +80,14 @@ async function init() {
 
     setupEventListeners();
     renderDashboard();
+
+    // Cross-device cloud sync
+    syncWithCloud();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        syncWithCloud();
+      }
+    });
 
     // Check if URL has hash (e.g. #cbre)
     const hash = window.location.hash.replace('#', '');
@@ -177,6 +189,82 @@ function updateCompanyStatus(companyId, status) {
     detailStatusSelect.value = status;
     detailStatusSelect.setAttribute('data-val', status);
   }
+
+  saveStatusToCloud(companyId, status);
+}
+
+// ============================================================
+// CLOUD PERSISTENCE & CROSS-DEVICE SYNC
+// ============================================================
+async function saveStatusToCloud(companyId, status) {
+  updateCloudSyncBadge('syncing');
+  try {
+    const payload = {
+      name: "cv_app_ignacio_statuses",
+      data: state.statuses
+    };
+    await fetch(CLOUD_SYNC_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    updateCloudSyncBadge('synced');
+  } catch (err) {
+    console.warn('Error syncing status to cloud:', err);
+    updateCloudSyncBadge('offline');
+  }
+}
+
+async function syncWithCloud() {
+  updateCloudSyncBadge('syncing');
+  try {
+    const res = await fetch(CLOUD_SYNC_URL);
+    if (res.ok) {
+      const json = await res.json();
+      if (json && json.data && typeof json.data === 'object') {
+        let hasChanges = false;
+        for (const [compId, compData] of Object.entries(json.data)) {
+          const cloudStatus = typeof compData === 'string' ? compData : (compData.status || 'Pendiente');
+          if (state.statuses[compId] !== cloudStatus) {
+            state.statuses[compId] = cloudStatus;
+            hasChanges = true;
+          }
+        }
+        if (hasChanges) {
+          localStorage.setItem('cv_app_ignacio_statuses', JSON.stringify(state.statuses));
+          if (state.viewMode === 'dashboard') {
+            renderDashboard();
+          } else {
+            const comp = getSelectedCompany();
+            const curStatus = state.statuses[comp.id] || 'Pendiente';
+            detailStatusSelect.value = curStatus;
+            detailStatusSelect.setAttribute('data-val', curStatus);
+          }
+        }
+        updateCloudSyncBadge('synced');
+        return;
+      }
+    }
+    updateCloudSyncBadge('synced');
+  } catch (err) {
+    console.warn('Cloud sync read warning:', err);
+    updateCloudSyncBadge('offline');
+  }
+}
+
+function updateCloudSyncBadge(status) {
+  const badge = document.getElementById('cloudSyncBadge');
+  if (!badge) return;
+  if (status === 'syncing') {
+    badge.className = 'badge-sync syncing';
+    badge.innerHTML = '🔄 Sincronizando...';
+  } else if (status === 'synced') {
+    badge.className = 'badge-sync';
+    badge.innerHTML = '☁️ Nube sincronizada';
+  } else {
+    badge.className = 'badge-sync offline';
+    badge.innerHTML = '💾 Guardado local';
+  }
 }
 
 // ============================================================
@@ -269,6 +357,11 @@ function renderDashboard() {
                 ${isDirect ? `✉️ Email Directo (${comp.contactTarget})` : `🌐 Portal Web de Empleo`}
               </span>
             </div>
+          </div>
+
+          <div class="card-intel-box">
+            <div class="card-intel-state"><strong>📈 Momento actual:</strong> ${comp.currentState || ''}</div>
+            <div class="card-intel-fit"><strong>🎯 Por qué encaja Ignacio:</strong> ${comp.whyIgnacioFits || ''}</div>
           </div>
         </div>
 
@@ -386,12 +479,20 @@ function renderDetailWorkspace() {
   if (state.subTab === 'pitch') {
     docControlsBar.style.display = 'none';
     paperView.style.display = 'none';
+    if (intelView) intelView.style.display = 'none';
     pitchView.style.display = 'block';
     renderPitch(comp);
+  } else if (state.subTab === 'intel') {
+    docControlsBar.style.display = 'none';
+    paperView.style.display = 'none';
+    pitchView.style.display = 'none';
+    if (intelView) intelView.style.display = 'flex';
+    renderIntel(comp);
   } else {
     docControlsBar.style.display = 'flex';
     paperView.style.display = 'block';
     pitchView.style.display = 'none';
+    if (intelView) intelView.style.display = 'none';
 
     if (state.subTab === 'cv') {
       renderCV(comp);
@@ -399,6 +500,71 @@ function renderDetailWorkspace() {
       renderLetter(comp);
     }
   }
+}
+
+function renderIntel(company) {
+  if (!intelView) return;
+  intelView.style.display = 'flex';
+  paperView.style.display = 'none';
+  pitchView.style.display = 'none';
+  docControlsBar.style.display = 'none';
+
+  intelView.innerHTML = `
+    <!-- Bloque 1: Perfil de la Empresa -->
+    <div class="intel-hero-card">
+      <div class="intel-hero-header">
+        <div>
+          <span class="intel-section-badge badge-company-profile">🏢 Radiografía Corporativa</span>
+          <h3 class="intel-hero-title">${company.name}</h3>
+          <div style="font-size: 13px; color: #52525b; font-weight: 600;">${company.category}</div>
+        </div>
+        <div class="intel-meta-badges">
+          <span class="badge-priority badge-${company.priority}">${company.priority.toUpperCase()} PRIORIDAD</span>
+        </div>
+      </div>
+      
+      <p class="intel-text-content">${company.companyInfo || ''}</p>
+
+      <div style="margin-top: 15px; padding-top: 12px; border-top: 1px dashed #d4d4d8; display: flex; flex-wrap: wrap; gap: 15px; font-size: 12px; color: #3f3f46;">
+        <div><strong>📍 Sede / Ubicación:</strong> ${company.location}</div>
+        <div><strong>📞 Teléfono:</strong> ${company.phone || 'Centralita'}</div>
+        <div><strong>👤 Interlocutor:</strong> ${company.contactRoleName || 'Dirección de Personas'}</div>
+        <div><strong>✉️ Canal:</strong> ${company.channel === 'direct_email' ? `Email Directo (${company.contactTarget})` : 'Portal Web'}</div>
+      </div>
+    </div>
+
+    <!-- Bloque 2: Momento Actual y Retos en Málaga -->
+    <div class="intel-hero-card" style="border-left: 6px solid var(--neo-yellow);">
+      <span class="intel-section-badge badge-state-current">📈 Momento Actual & Retos 2026 en Málaga</span>
+      <p class="intel-text-content" style="font-size: 14.5px; font-weight: 500; color: #18181b;">
+        ${company.currentState || ''}
+      </p>
+    </div>
+
+    <!-- Bloque 3: Por qué encaja Ignacio Fernández -->
+    <div class="intel-hero-card" style="border-left: 6px solid var(--neo-green);">
+      <span class="intel-section-badge badge-fit-why">🎯 ¿Por Qué Es Interesante La Candidatura de Ignacio?</span>
+      
+      <p class="intel-text-content" style="font-size: 14.5px; font-weight: 500; color: #064e3b; margin-bottom: 16px;">
+        ${company.whyIgnacioFits || ''}
+      </p>
+
+      <div class="intel-pillars-grid">
+        <div class="intel-pillar-card">
+          <h4>🎓 Titulación Superior en Negocio</h4>
+          <p>Graduado en ADE (Universidad de Málaga) + Máster en Dirección Comercial GESCO (ESIC) + Máster Savills University.</p>
+        </div>
+        <div class="intel-pillar-card">
+          <h4>⏱️ 5 Años de Rigor en Campo</h4>
+          <p>Trayectoria corporativa en Savills Málaga: coordinación de cronogramas, auditorías técnicas in situ y 100% de cumplimiento en plazos.</p>
+        </div>
+        <div class="intel-pillar-card">
+          <h4>📊 Control Numérico & Equipos</h4>
+          <p>Dominio avanzado de modelos cuantitativos, cuentas de resultados (P&L), control de mermas y dinamización de equipos multidisciplinares.</p>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 function renderCV(company) {

@@ -1240,6 +1240,151 @@ body {
   }
 }
 
+/* CLOUD SYNC BADGE */
+.badge-sync {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--neo-border);
+  box-shadow: 2px 2px 0px var(--neo-border);
+  background: #dcfce7;
+  color: #166534;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+.badge-sync.syncing {
+  background: #fef9c3;
+  color: #854d0e;
+}
+.badge-sync.offline {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* DASHBOARD CARD INTEL BOX */
+.card-intel-box {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: #fafaf9;
+  border: 1.5px solid #e7e5e4;
+  border-left: 3.5px solid var(--neo-cyan);
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #292524;
+}
+.card-intel-state {
+  margin-bottom: 5px;
+}
+.card-intel-fit {
+  color: #15803d;
+}
+
+/* INTEL VIEW IN DETAIL PAGE */
+.intel-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto 40px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.intel-hero-card {
+  background: #FFFFFF;
+  border: 3px solid var(--neo-border);
+  box-shadow: 6px 6px 0px var(--neo-border);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.intel-hero-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.intel-hero-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--neo-border);
+  margin: 0 0 6px 0;
+}
+
+.intel-meta-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.intel-section-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 2px solid var(--neo-border);
+  box-shadow: 2px 2px 0px var(--neo-border);
+  margin-bottom: 10px;
+}
+.badge-state-current {
+  background: var(--neo-yellow);
+  color: #000;
+}
+.badge-fit-why {
+  background: var(--neo-green);
+  color: #000;
+}
+.badge-company-profile {
+  background: var(--neo-cyan);
+  color: #000;
+}
+
+.intel-text-content {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: #1c1917;
+  text-align: justify;
+}
+
+.intel-pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 15px;
+  margin-top: 18px;
+}
+
+.intel-pillar-card {
+  background: #f8fafc;
+  border: 2px solid var(--neo-border);
+  box-shadow: 3px 3px 0px var(--neo-border);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.intel-pillar-card h4 {
+  margin: 0 0 6px 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.intel-pillar-card p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #475569;
+}
+
 /* PRINT STYLES */
 @media print {
   @page {
