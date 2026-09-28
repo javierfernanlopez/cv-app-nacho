@@ -1291,7 +1291,7 @@ li {
 }
 
 /* ============================================================ */
-/* MOBILE BOTTOM NAVIGATION BAR                                */
+/* MOBILE BOTTOM NAVIGATION BAR (PENDIENTES | AÑADIR | SOLICITADOS) */
 /* ============================================================ */
 .mobile-bottom-nav {
   display: none;
@@ -1299,78 +1299,156 @@ li {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 62px;
+  height: 68px;
   background: #FFFFFF;
   border-top: 3.5px solid var(--neo-border);
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  justify-content: space-around;
   align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
   padding-bottom: env(safe-area-inset-bottom, 0);
-}
-
-.bottom-nav-item {
-  background: none;
-  border: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  color: var(--neo-text-muted);
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  cursor: pointer;
-  padding: 6px 10px;
-  border-radius: 6px;
-  transition: all 0.15s ease;
-  flex: 1;
-  height: 100%;
-}
-
-.bottom-nav-item .nav-icon {
-  font-size: 19px;
-  line-height: 1;
-}
-
-.bottom-nav-item.active {
-  color: var(--neo-text);
-}
-
-.bottom-nav-item.active .nav-icon {
-  transform: scale(1.15);
-}
-
-.bottom-nav-item.nav-item-add {
-  position: relative;
-  top: -8px;
-}
-
-.bottom-nav-item.nav-item-add .nav-icon-circle {
-  background: var(--neo-yellow);
-  border: 2.5px solid var(--neo-border);
-  box-shadow: 2.5px 2.5px 0px var(--neo-border);
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  color: var(--neo-text);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.bottom-nav-item.nav-item-add:active .nav-icon-circle {
-  transform: translate(1.5px, 1.5px);
-  box-shadow: 1px 1px 0px var(--neo-border);
 }
 
 @media (max-width: 768px) {
   .mobile-bottom-nav {
     display: flex;
   }
+}
+
+.bottom-nav-item {
+  flex: 1;
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  padding: 8px 4px;
+  border-radius: 8px;
+  color: #71717A;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bottom-nav-item .nav-icon {
+  font-size: 21px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.bottom-nav-item .nav-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  transition: color 0.2s ease;
+}
+
+/* Active tab style */
+.bottom-nav-item.active {
+  color: var(--neo-text);
+}
+
+.bottom-nav-item.active .nav-icon {
+  transform: scale(1.18);
+}
+
+.bottom-nav-item.active .nav-label {
+  color: var(--neo-text);
+  font-weight: 900;
+}
+
+.bottom-nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  width: 22px;
+  height: 3.5px;
+  background: var(--neo-border);
+  border-radius: 2px;
+}
+
+/* Count badge inside tab */
+.nav-badge {
+  position: absolute;
+  top: 3px;
+  right: 20%;
+  background: var(--neo-yellow);
+  color: #000000;
+  border: 1.5px solid var(--neo-border);
+  box-shadow: 1px 1px 0px var(--neo-border);
+  font-size: 9.5px;
+  font-weight: 900;
+  padding: 1px 5px;
+  border-radius: 9999px;
+  min-width: 16px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.nav-badge.nav-badge-green {
+  background: var(--neo-green);
+  color: #FFFFFF;
+}
+
+/* CENTER ELEVATED AÑADIR BUTTON */
+.bottom-nav-add-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  top: -14px;
+  margin: 0 12px;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-nav-add {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--neo-yellow);
+  border: 3.5px solid var(--neo-border);
+  box-shadow: 0 4px 0 var(--neo-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+  outline: none;
+}
+
+.btn-nav-add-icon {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--neo-text);
+}
+
+.btn-nav-add:hover {
+  background: var(--neo-yellow-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 var(--neo-border);
+}
+
+.btn-nav-add:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--neo-border);
+}
+
+.btn-nav-add-label {
+  font-size: 9.5px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--neo-text);
+  margin-top: 3px;
+  user-select: none;
 }
 
 /* ============================================================ */
@@ -1789,18 +1867,6 @@ li {
       <h1>CV Suite</h1>
       <span class="badge-user">Ignacio Fernández López</span>
     </div>
-
-    <div class="header-controls">
-      <span id="cloudSyncBadge" class="badge-sync" title="Estado sincronizado en la nube">
-        ☁️ Sincronizado en la nube
-      </span>
-      <button id="openAddOfferBtn" class="btn-neo btn-neo-yellow" style="margin-left: 6px;">
-        ✨ Añadir Oferta (IA)
-      </button>
-      <span style="font-size: 12px; font-weight: 800; color: var(--neo-text-muted);">
-        🎯 58 Empresas en Málaga (Supermercados, Retail, Sedes Corporativas)
-      </span>
-    </div>
   </header>
 
   <!-- ======================================================== -->
@@ -1808,8 +1874,7 @@ li {
   <!-- ======================================================== -->
   <main id="dashboardView">
     <div class="dashboard-hero">
-      <h2>Listado de Candidaturas y Empresas</h2>
-      <p>Selecciona una empresa para acceder a su pack personalizado (CV adaptado en PDF A4 de 1 página, carta formal y envío directo vía app de Gmail).</p>
+      <h2>Candidaturas y Empresas</h2>
     </div>
 
     <!-- Metrics Strip -->
@@ -1842,11 +1907,11 @@ li {
         <input type="text" id="dashSearchInput" class="search-box-large" placeholder="🔍 BUSCAR POR SUPERMERCADO, RETAIL, OPERACIONES O UBICACIÓN...">
       </div>
       <div class="filter-pills-row">
-        <button class="pill-filter active" data-filter="all">TODAS (58)</button>
+        <button class="pill-filter" data-filter="all">TODAS (58)</button>
         <button class="pill-filter" data-filter="alta">🔥 ALTA PRIORIDAD</button>
         <button class="pill-filter" data-filter="direct_email">✉️ EMAIL DIRECTO</button>
         <button class="pill-filter" data-filter="portal">🌐 PORTAL WEB</button>
-        <button class="pill-filter" data-filter="Pendiente">⏳ PENDIENTES</button>
+        <button class="pill-filter active" data-filter="Pendiente">⏳ PENDIENTES</button>
         <button class="pill-filter" data-filter="Enviado">✅ ENVIADAS</button>
         <button class="pill-filter" data-filter="En Proceso">💬 EN PROCESO</button>
       </div>
@@ -1956,21 +2021,23 @@ li {
 
   <!-- Mobile Bottom Navigation Bar (WebApp Android / iOS) -->
   <nav class="mobile-bottom-nav no-print" id="mobileBottomNav">
-    <button class="bottom-nav-item active" id="navBtnDashboard" title="Ver Empresas">
-      <span class="nav-icon">🏢</span>
-      <span class="nav-label">Empresas</span>
+    <button class="bottom-nav-item active" id="navBtnPending" title="Ver Pendientes">
+      <span class="nav-icon">⏳</span>
+      <span class="nav-label">Pendientes</span>
+      <span class="nav-badge" id="navPendingBadge">58</span>
     </button>
-    <button class="bottom-nav-item nav-item-add" id="navBtnAddOffer" title="Añadir Oferta con IA">
-      <span class="nav-icon-circle">➕</span>
-      <span class="nav-label">Añadir</span>
-    </button>
-    <button class="bottom-nav-item" id="navBtnMetrics" title="Métricas">
-      <span class="nav-icon">📊</span>
-      <span class="nav-label">Métricas</span>
-    </button>
-    <button class="bottom-nav-item" id="navBtnAiSettings" title="Configurar IA">
-      <span class="nav-icon">✨</span>
-      <span class="nav-label">Gemini IA</span>
+
+    <div class="bottom-nav-add-wrap">
+      <button class="btn-nav-add" id="navBtnAddOffer" title="Añadir Oferta con IA">
+        <span class="btn-nav-add-icon">➕</span>
+      </button>
+      <span class="btn-nav-add-label">Añadir</span>
+    </div>
+
+    <button class="bottom-nav-item" id="navBtnSent" title="Ver Solicitados">
+      <span class="nav-icon">✅</span>
+      <span class="nav-label">Solicitados</span>
+      <span class="nav-badge nav-badge-green" id="navSentBadge">0</span>
     </button>
   </nav>
 
@@ -2042,10 +2109,9 @@ li {
                 Modelo de Gemini:
               </label>
               <select id="geminiModelSelect" class="neo-select">
-                <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Recomendado / Ultrarrápido)</option>
+                <option value="gemini-3.8-flash" selected>Gemini 3.8 Flash (Recomendado)</option>
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
                 <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                <option value="gemini-3.8-flash-preview">Gemini 3.8 Flash (Preview)</option>
               </select>
             </div>
           </div>
