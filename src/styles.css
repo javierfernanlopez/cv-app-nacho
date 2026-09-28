@@ -476,6 +476,13 @@ body {
   z-index: 30;
 }
 
+.detail-header-top-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
 .detail-header-left {
   display: flex;
   align-items: center;
@@ -512,6 +519,19 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.detail-header-status-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-header-action-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 /* CENTER SWITCHER TABS */
@@ -765,96 +785,7 @@ body {
   font-weight: 600;
 }
 
-/* PITCH PANEL VIEW */
-.pitch-container {
-  width: 210mm;
-  max-width: 100%;
-  background: #FFFFFF;
-  border: 3.5px solid var(--neo-border);
-  box-shadow: 7px 7px 0px var(--neo-border);
-  border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 40px;
-}
 
-.pitch-header {
-  border-bottom: 3px solid var(--neo-border);
-  padding-bottom: 16px;
-  margin-bottom: 20px;
-}
-
-.pitch-header h3 {
-  font-size: 19px;
-  font-weight: 900;
-  color: #121212;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-
-.pitch-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  font-size: 12px;
-}
-
-.pitch-meta-item {
-  background: #FDFBF7;
-  border: 2px solid var(--neo-border);
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-weight: 700;
-}
-
-.pitch-field { margin-bottom: 20px; }
-
-.field-label-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.field-label {
-  font-size: 12px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #121212;
-}
-
-.pitch-input {
-  width: 100%;
-  background: #FFFFFF;
-  border: 2.5px solid var(--neo-border);
-  box-shadow: 3px 3px 0px var(--neo-border);
-  border-radius: 6px;
-  padding: 10px 14px;
-  color: #121212;
-  font-size: 13px;
-  font-weight: 700;
-  font-family: inherit;
-}
-
-.pitch-textarea {
-  width: 100%;
-  height: 320px;
-  background: #FFFFFF;
-  border: 2.5px solid var(--neo-border);
-  box-shadow: 4px 4px 0px var(--neo-border);
-  border-radius: 6px;
-  padding: 14px;
-  color: #121212;
-  font-size: 13px;
-  line-height: 1.55;
-  font-family: inherit;
-  resize: vertical;
-}
-
-.pitch-textarea:focus, .pitch-input:focus {
-  background: #FFFDEB;
-  outline: none;
-}
 
 .strategy-box {
   background: var(--neo-yellow);
@@ -1064,13 +995,15 @@ body {
   .detail-unified-header {
     height: auto;
     min-height: auto;
-    padding: 10px 12px;
+    padding: 8px 10px;
+    display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
+    gap: 8px;
   }
 
-  .detail-header-left {
+  /* Row 1: Top Navigation + Company Name + Discard & Status */
+  .detail-header-top-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1078,9 +1011,17 @@ body {
     gap: 8px;
   }
 
+  .detail-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
+
   .detail-header-left .btn-neo {
-    padding: 6px 10px;
-    font-size: 11.5px;
+    padding: 5px 8px;
+    font-size: 11px;
     flex-shrink: 0;
   }
 
@@ -1089,69 +1030,102 @@ body {
     min-width: 0;
   }
 
+  .detail-company-title-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
   .detail-company-text h2 {
-    font-size: 15px;
+    font-size: 13.5px;
+    font-weight: 900;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+    line-height: 1.2;
   }
 
   .detail-company-meta-sub {
-    font-size: 10.5px;
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--neo-text-muted);
   }
 
-  .detail-header-center {
-    width: 100%;
-  }
-
-  .segmented-nav {
-    width: 100%;
+  .detail-header-status-group {
     display: flex;
-  }
-
-  .nav-tab-btn {
-    flex: 1;
-    padding: 8px 4px;
-    font-size: 11.5px;
-    text-align: center;
-    justify-content: center;
-  }
-
-  .detail-header-right {
-    width: 100%;
-    display: flex;
-    flex-wrap: wrap;
     align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .detail-header-status-group #detailDiscardBtn {
+    padding: 5px 8px;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .detail-header-status-group .status-select {
+    padding: 5px 8px;
+    font-size: 11px;
+    max-width: 108px;
+  }
+
+  /* Row 2: Switcher [CV | Carta] + Dispatch Action + Download PDF */
+  .detail-header-action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
     gap: 8px;
   }
 
+  .detail-header-center {
+    flex-shrink: 0;
+  }
+
+  .segmented-nav {
+    display: inline-flex;
+    width: auto;
+  }
+
+  .nav-tab-btn {
+    padding: 6px 12px;
+    font-size: 11.5px;
+    text-align: center;
+  }
+
+  .detail-header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+
   .detail-header-right #dispatchButtonsGroup {
-    flex: 1 1 100%;
+    flex: 1;
+    min-width: 0;
     display: flex;
   }
 
   .detail-header-right #dispatchButtonsGroup .btn-neo {
     width: 100%;
+    padding: 6px 8px;
+    font-size: 11.5px;
     justify-content: center;
-    padding: 10px 12px;
-    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .detail-header-right #detailDownloadAllBtn {
-    flex: 1;
-    justify-content: center;
-    padding: 10px 12px;
-    font-size: 13px;
-  }
-
-  .detail-header-right #detailDiscardBtn {
-    flex: 1;
-    justify-content: center;
-    padding: 10px 12px;
-    font-size: 13px;
-  }
-
-  .detail-header-right .status-select {
-    flex: 1 1 100%;
-    padding: 9px 10px;
-    font-size: 12px;
+    padding: 6px 9px;
+    font-size: 11.5px;
+    flex-shrink: 0;
   }
 
   /* DOCUMENT CANVAS */
@@ -1161,40 +1135,53 @@ body {
     box-sizing: border-box;
   }
 
-  /* COMPACT CONTROLS BAR */
+  /* COMPACT CONTROLS BAR - SINGLE SLIM ROW ON MOBILE */
   .doc-controls-bar {
     width: 100%;
     max-width: 100%;
-    padding: 8px 10px;
-    flex-direction: column;
-    align-items: stretch;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
     gap: 8px;
+    margin: 6px auto;
     box-shadow: 3px 3px 0px var(--neo-border);
   }
 
   .doc-role-block {
-    width: 100%;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .doc-role-block label {
+    font-size: 10.5px;
+    font-weight: 900;
+    white-space: nowrap;
   }
 
   .doc-role-select {
-    width: 100%;
-    max-width: 100%;
-    font-size: 11.5px;
-    padding: 8px 8px;
+    flex: 1;
+    min-width: 0;
+    font-size: 11px;
+    padding: 5px 6px;
   }
 
   .doc-tools-block {
-    width: 100%;
-    justify-content: flex-end;
-    gap: 6px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
   }
 
   .doc-tools-block .btn-neo {
-    padding: 6px 10px;
-    font-size: 11px;
+    padding: 5px 8px;
+    font-size: 10.5px;
   }
 
   /* RESPONSIVE A4 PAPER ON MOBILE (ANDROID) */
@@ -1289,41 +1276,7 @@ body {
     margin-bottom: 3px;
   }
 
-  /* PITCH CONTAINER ON MOBILE */
-  .pitch-container {
-    width: 100%;
-    max-width: 100%;
-    padding: 14px 12px;
-    box-shadow: 4px 4px 0px var(--neo-border);
-    border-width: 2.5px;
-    box-sizing: border-box;
-    margin-bottom: 24px;
-  }
 
-  .pitch-header h3 {
-    font-size: 16px;
-  }
-
-  .pitch-meta {
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .pitch-meta-item {
-    font-size: 11px;
-    padding: 4px 8px;
-  }
-
-  .pitch-input {
-    font-size: 12px;
-    padding: 8px 10px;
-  }
-
-  .pitch-textarea {
-    height: 220px;
-    font-size: 12px;
-    padding: 10px;
-  }
 
   .strategy-box {
     font-size: 11.5px;

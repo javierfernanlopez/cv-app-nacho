@@ -11,7 +11,7 @@ let state = {
   viewMode: 'dashboard', // 'dashboard' | 'detail'
   selectedCompanyId: 'maskom',
   activeRoleKey: 'area_manager_retail_ops',
-  subTab: 'cv', // 'cv' | 'letter' | 'pitch'
+  subTab: 'cv', // 'cv' | 'letter'
   showPhoto: true,
   isEditing: false,
   filter: 'Pendiente',
@@ -55,7 +55,6 @@ const navTabButtons = document.querySelectorAll('.nav-tab-btn');
 
 // DOM Elements - Content Sheets
 const paperView = document.getElementById('paperView');
-const pitchView = document.getElementById('pitchView');
 const toastEl = document.getElementById('toast');
 
 // Bottom Nav DOM Elements (3 Views: Pendientes | Añadir | Solicitados)
@@ -81,8 +80,27 @@ const aiProgressText = document.getElementById('aiProgressText');
 const DEFAULT_GEMINI_API_KEY = (typeof atob === 'function') 
   ? atob('QVEuQWI4Uk42SUpDSDdiTVRHQzNUdjVnQ1haQmxCd21GbGZ6TjlRdmVqcnhLMEhxSFVBZUE=')
   : Buffer.from('QVEuQWI4Uk42SUpDSDdiTVRHQzNUdjVnQ1haQmxCd21GbGZ6TjlRdmVqcnhLMEhxSFVBZUE=', 'base64').toString('utf-8');
-const PRIMARY_AI_MODEL = 'gemini-3.8-flash';
-const FALLBACK_AI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite'];
+
+// Specialized 2-Stage Pipeline:
+// Stage 1: Scan links & job announcements using 2.5 Flash (with resilient auto-fallback)
+const SCAN_AI_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-3.8-flash',
+  'gemini-3.6-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-flash-lite-latest'
+];
+
+// Stage 2: Deep synthesis of tailored CV and Cover Letter using 2.5 Pro (with resilient auto-fallback)
+const GENERATION_AI_MODELS = [
+  'gemini-2.5-pro',
+  'gemini-3.1-pro-preview',
+  'gemini-pro-latest',
+  'gemini-3.8-flash',
+  'gemini-3.6-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-flash-lite-latest'
+];
 
 // Cloud Sync Endpoint (Multi-device persistent sync)
 const CLOUD_SYNC_URL = 'https://api.restful-api.dev/objects/ff808181a09d98f701a0e4f51a0928e0';
@@ -180,7 +198,7 @@ function setupEventListeners() {
     updateCompanyStatus(state.selectedCompanyId, e.target.value);
   });
 
-  // Detail Nav Tabs (CV / Letter / Pitch)
+  // Detail Nav Tabs (CV / Letter)
   navTabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       navTabButtons.forEach(b => b.classList.remove('active'));
@@ -623,22 +641,13 @@ function renderDispatchButtons(comp) {
 function renderDetailWorkspace() {
   const comp = getSelectedCompany();
 
-  // Control visibility of document controls strip
-  if (state.subTab === 'pitch') {
-    docControlsBar.style.display = 'none';
-    paperView.style.display = 'none';
-    pitchView.style.display = 'block';
-    renderPitch(comp);
-  } else {
-    docControlsBar.style.display = 'flex';
-    paperView.style.display = 'block';
-    pitchView.style.display = 'none';
+  docControlsBar.style.display = 'flex';
+  paperView.style.display = 'block';
 
-    if (state.subTab === 'cv') {
-      renderCV(comp);
-    } else if (state.subTab === 'letter') {
-      renderLetter(comp);
-    }
+  if (state.subTab === 'letter') {
+    renderLetter(comp);
+  } else {
+    renderCV(comp);
   }
 }
 
@@ -886,67 +895,6 @@ function renderLetter(company) {
   `;
 }
 
-function renderPitch(company) {
-  const fullPitch = company.naturalEmail || '';
-
-  pitchView.innerHTML = `
-    <div class="pitch-header">
-      <h3>Propuesta Personalizada: ${company.name}</h3>
-      <div class="pitch-meta">
-        <div class="pitch-meta-item"><strong>CANAL:</strong> ${company.channel === 'direct_email' ? '<span class="material-symbols-outlined" style="font-size: 13px;">mail</span> CORREO DIRECTO (Máxima efectividad)' : '<span class="material-symbols-outlined" style="font-size: 13px;">language</span> PORTAL CORPORATIVO ATS'}</div>
-        <div class="pitch-meta-item"><strong>DESTINATARIO:</strong> ${company.contactTarget} (${company.contactRoleName || 'Dirección de Personas'})</div>
-        <div class="pitch-meta-item"><strong>TELÉFONO:</strong> ${company.phone || 'Centralita'}</div>
-      </div>
-    </div>
-
-    <div class="pitch-field">
-      <div class="field-label-row">
-        <span class="field-label">Línea de Asunto Recomendada</span>
-        <button id="copySubjectBtn" class="btn-neo btn-neo-yellow" style="padding: 4px 10px; font-size: 11px;">
-          <span class="material-symbols-outlined" style="font-size: 13px;">content_copy</span> Copiar Asunto
-        </button>
-      </div>
-      <input type="text" id="subjectInput" class="pitch-input" value="${company.emailSubject || `Candidatura ${company.name} | Ignacio Fernández López`}" readonly>
-    </div>
-
-    <div class="pitch-field">
-      <div class="field-label-row">
-        <span class="field-label">Mensaje en tu voz natural (100% Humano y Directo)</span>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button id="copyPitchBtn" class="btn-neo btn-neo-green" style="font-size: 12px; padding: 6px 12px;">
-            <span class="material-symbols-outlined" style="font-size: 14px;">content_copy</span> Copiar Texto
-          </button>
-        </div>
-      </div>
-      <textarea id="emailPitchText" class="pitch-textarea">${fullPitch}</textarea>
-    </div>
-
-    <div class="pitch-field">
-      <span class="field-label" style="display:block; margin-bottom: 8px;">Estrategia de Contacto (Vía Correo Web)</span>
-      <div class="strategy-box">
-        <strong><span class="material-symbols-outlined" style="font-size: 14px;">info</span> Instrucciones de Envío para ${company.name}:</strong><br>
-        ${company.channel === 'direct_email' 
-          ? `Este contacto se realiza por correo directo a <code>${company.contactTarget}</code>.<br>
-             1. Pulsa arriba en <strong>Enviar (Gmail)</strong>.<br>
-             2. Se abrirá la app de Gmail con el destinatario, asunto y mensaje completados.<br>
-             3. Adjunta el archivo PDF descargado y pulsa <strong>Enviar</strong>.` 
-          : `Accede a la oferta pulsando arriba en <strong>Ir al Portal Web</strong>.<br>
-             1. Pulsa en <strong>Descargar</strong> o <strong>Imprimir</strong> para tener tu CV listo.<br>
-             2. Pulsa en <strong>Copiar Texto</strong> para pegar la carta adaptada en el formulario web.`}
-      </div>
-    </div>
-  `;
-
-  document.getElementById('copySubjectBtn').addEventListener('click', () => {
-    navigator.clipboard.writeText(document.getElementById('subjectInput').value);
-    showToast('Asunto copiado al portapapeles');
-  });
-
-  document.getElementById('copyPitchBtn').addEventListener('click', () => {
-    navigator.clipboard.writeText(document.getElementById('emailPitchText').value);
-    showToast('Cuerpo del mensaje copiado al portapapeles');
-  });
-}
 
 // ============================================================
 // DOWNLOADS & GMAIL DISPATCH (CV + CARTA DE PRESENTACIÓN)
@@ -1006,7 +954,7 @@ function downloadCompanyCvAndLetter(company) {
 }
 
 function openGmail(company) {
-  const emailText = document.getElementById('emailPitchText')?.value || company.naturalEmail || '';
+  const emailText = company.naturalEmail || company.tailoredCoverLetter || '';
   const to = company.channel === 'direct_email' ? company.contactTarget : '';
   const subject = company.emailSubject || `Candidatura ${company.name} | Ignacio Fernández López`;
 
@@ -1204,65 +1152,53 @@ async function extractOfferFromUrl(url) {
   return { meta, scrapedText };
 }
 
-// Robust Multi-Model AI Completion (always starts with gemini-3.8-flash, with automatic seamless fallback)
-async function requestAiCompletion(promptText, onProgress) {
+// Generic multi-model caller (attempts primary model, then falls back seamlessly with timeout)
+async function requestGeminiModels(models, promptText, onProgress, stepLabel) {
   const apiKey = DEFAULT_GEMINI_API_KEY;
-  const modelsToTry = [PRIMARY_AI_MODEL, ...FALLBACK_AI_MODELS];
   let lastError = null;
 
-  for (let i = 0; i < modelsToTry.length; i++) {
-    const model = modelsToTry[i];
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i];
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    const maxAttempts = (i === 0) ? 2 : 1;
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        if (onProgress) {
-          onProgress('Analizando oferta y adaptando requisitos...');
-        }
-
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: promptText }] }],
-            generationConfig: {
-              temperature: 0.2,
-              responseMimeType: 'application/json'
-            }
-          })
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          const rawText = data.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '';
-          const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
-          }
-          throw new Error('Respuesta JSON no detectada');
-        }
-
-        if (!res.ok) {
-          const errText = await res.text().catch(() => '');
-          lastError = new Error(`API error ${res.status}: ${errText}`);
-          if (res.status === 503 && attempt < maxAttempts) {
-            await new Promise(r => setTimeout(r, 1000));
-            continue;
-          }
-          // On 429 (quota) or after 503 retry, advance immediately to next model
-          break;
-        }
-      } catch (err) {
-        lastError = err;
-        if (attempt < maxAttempts) {
-          await new Promise(r => setTimeout(r, 1000));
-        }
+    try {
+      if (onProgress && stepLabel) {
+        onProgress(stepLabel);
       }
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(12000),
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }],
+          generationConfig: {
+            temperature: 0.2,
+            responseMimeType: 'application/json'
+          }
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const rawText = data.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '';
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          return JSON.parse(jsonMatch[0]);
+        }
+        throw new Error('Respuesta JSON no detectada');
+      }
+
+      const errText = await res.text().catch(() => '');
+      lastError = new Error(`API error ${res.status}: ${errText}`);
+      continue;
+    } catch (err) {
+      lastError = err;
+      continue;
     }
   }
 
-  throw lastError || new Error('No se pudo conectar con el servicio de IA');
+  throw lastError || new Error('No se pudo conectar con el servicio tras varios intentos.');
 }
 
 async function handleAutoScanUrl() {
@@ -1310,7 +1246,7 @@ async function handleProcessAddOffer() {
 
   aiScanProgress.style.display = 'flex';
   btnSubmitAddOffer.disabled = true;
-  aiProgressText.textContent = 'Analizando requisitos de la oferta...';
+  aiProgressText.textContent = 'Iniciando escaneo de la vacante...';
 
   const { meta, scrapedText } = await extractOfferFromUrl(url);
   const finalDescription = (text || scrapedText || '').trim();
@@ -1326,31 +1262,16 @@ async function handleProcessAddOffer() {
   let parsedResult = null;
 
   try {
-    aiProgressText.textContent = 'Escaneando oferta y adaptando candidatura...';
-    const geminiPrompt = `
-Eres un Headhunter Senior y consultor de selección de alto nivel en España.
-Tu tarea es analizar la siguiente oferta de empleo o empresa y redactar una adaptación exhaustiva, profesional y de máximo impacto para la candidatura de Ignacio Fernández López (Nacho).
+    // Stage 1: Scan link / announcement with Flash
+    const scanPrompt = `
+Eres un analista de talento senior. Analiza la siguiente oferta de empleo o enlace y extrae los datos clave en formato JSON.
 
-Perfil de Ignacio:
-- Graduado en ADE (Universidad de Málaga)
-- Máster GESCO en Dirección Comercial y Marketing (ESIC Business & Marketing School)
-- Máster Savills University
-- 5 años de experiencia consolidada en Savills Málaga (Consultoría inmobiliaria estratégica, Valoraciones RICS/ECO masivas, Due Diligence técnica y urbanística, Project Management, Asset Management, supervisión operativa de activos y equipos)
-- Áreas y roles de responsabilidad que busca en Málaga / Costa del Sol:
-  * Gerente de Supermercados / Retail Operations / Area Manager (gestión de tiendas, P&L, control de mermas, equipos, logística)
-  * Real Estate Valuation & Advisory
-  * Responsable de Expansión & Localizaciones
-  * Dirección de Operaciones & Servicios
-  * Desarrollo de Negocio Proptech & RE
-  * Análisis de Inversiones / Real Estate Capital Markets
-  * Technical Property & Facility Manager
-
-Oferta o enlace a analizar:
+Contenido a analizar:
 """
 ${contentToAnalyze}
 """
 
-Responde EXCLUSIVAMENTE con un JSON válido con esta estructura exacta:
+Responde EXCLUSIVAMENTE con un JSON válido con esta estructura:
 {
   "name": "Nombre exacto de la empresa",
   "category": "Sector o actividad de la empresa (ej: Supermercados & Gran Distribución / Real Estate / Logística / Proptech)",
@@ -1358,18 +1279,59 @@ Responde EXCLUSIVAMENTE con un JSON válido con esta estructura exacta:
   "priority": "alta",
   "contactTarget": "${url || 'portal de empleo'}",
   "channel": "${(url && url.includes('@')) ? 'direct_email' : 'portal'}",
-  "companyInfo": "Radiografía clara y modelo de negocio de la empresa (2-3 frases concisas y profesionales)",
+  "companyInfo": "Radiografía y modelo de negocio (2 frases concisas)",
   "currentState": "Momento actual, retos 2026, plan de aperturas o contexto en Málaga (2 frases concisas)",
-  "whyIgnacioFits": "Argumento rotundo de por qué Ignacio encaja al 100%: combinación de ADE + Savills Málaga, conocimiento de suelo y locales en Costa del Sol, rigor en Due Diligence, operaciones y negociación (3 frases)",
-  "defaultRole": "slug del rol más afín: area_manager_retail_ops, real_estate_valuation_advisory, expansion_location_manager, operations_director_services, proptech_business_development, investment_analyst_capital_markets, technical_property_manager",
-  "tailoredSummary": "Resumen ejecutivo ATS para el CV de 3-4 líneas totalmente adaptado a los requisitos de esta oferta destacando su bagaje en Savills Málaga y competencias clave",
-  "tailoredCoverLetter": "Estimado/a Responsable de Selección de [Nombre de Empresa]:\\n\\n[Párrafo 1: Motivación y alineación con la vacante...]\\n\\n[Párrafo 2: Logros cuantitativos en ADE + Savills Málaga aplicables al puesto...]\\n\\n[Párrafo 3: Por qué puedo aportar valor inmediato y propuesta de reunión...]\\n\\nUn cordial saludo,\\nIgnacio Fernández López"
+  "roleName": "Puesto o vacante",
+  "keyRequirements": "Requisitos clave y funciones principales",
+  "defaultRole": "slug del rol más afín: area_manager_retail_ops, real_estate_valuation_advisory, expansion_location_manager, operations_director_services, proptech_business_development, investment_analyst_capital_markets, technical_property_manager"
 }
 `;
 
-    parsedResult = await requestAiCompletion(geminiPrompt, (statusText) => {
-      aiProgressText.textContent = statusText;
-    });
+    const scanData = await requestGeminiModels(
+      SCAN_AI_MODELS,
+      scanPrompt,
+      (msg) => { aiProgressText.textContent = msg; },
+      'Escaneando enlace y requisitos de la vacante...'
+    );
+
+    // Stage 2: Deep synthesis of tailored CV and Cover Letter with Pro
+    const genPrompt = `
+Eres un Headhunter Senior y consultor de talento de alto nivel en España.
+A partir de los datos analizados de la vacante, redacta una adaptación exhaustiva, profesional y de máximo impacto para la candidatura de Ignacio Fernández López (Nacho).
+
+DATOS EXTRAÍDOS DE LA VACANTE:
+- Empresa: ${scanData.name || 'Empresa'}
+- Sector: ${scanData.category || 'Sector'}
+- Ubicación: ${scanData.location || 'Málaga'}
+- Puesto: ${scanData.roleName || 'Vacante'}
+- Requisitos: ${scanData.keyRequirements || ''}
+- Contexto de la empresa: ${scanData.companyInfo || ''} / ${scanData.currentState || ''}
+
+PERFIL DE IGNACIO FERNÁNDEZ LÓPEZ:
+- Graduado en ADE (Universidad de Málaga)
+- Máster GESCO en Dirección Comercial y Marketing (ESIC Business & Marketing School)
+- Máster Savills University
+- 5 años de experiencia consolidada en Savills Málaga (consultoría inmobiliaria estratégica, Due Diligence técnica y urbanística, Project Management, supervisión operativa de activos, valoraciones masivas y negociación de contratos)
+
+Genera EXCLUSIVAMENTE un JSON válido con esta estructura:
+{
+  "whyIgnacioFits": "Argumento rotundo de por qué Ignacio encaja al 100%: combinación de ADE + Savills Málaga, conocimiento de suelo y locales en Costa del Sol, rigor en Due Diligence, operaciones y negociación (3 frases)",
+  "tailoredSummary": "Resumen ejecutivo ATS para el CV de 3-4 líneas totalmente adaptado a los requisitos de esta oferta destacando su bagaje en Savills Málaga y competencias clave",
+  "tailoredCoverLetter": "Estimado/a Responsable de Selección de ${scanData.name || 'la empresa'}:\\n\\n[Párrafo 1: Motivación y alineación con la vacante...]\\n\\n[Párrafo 2: Logros cuantitativos en ADE + Savills Málaga aplicables al puesto...]\\n\\n[Párrafo 3: Por qué puedo aportar valor inmediato y propuesta de reunión...]\\n\\nUn cordial saludo,\\nIgnacio Fernández López"
+}
+`;
+
+    const genData = await requestGeminiModels(
+      GENERATION_AI_MODELS,
+      genPrompt,
+      (msg) => { aiProgressText.textContent = msg; },
+      'Preparando CV y Carta de Presentación a medida...'
+    );
+
+    parsedResult = {
+      ...scanData,
+      ...genData
+    };
   } catch (err) {
     console.warn('AI execution note, aplicando analizador integrado:', err);
     parsedResult = fallbackParseOffer(url, finalDescription, meta);
