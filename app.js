@@ -72,34 +72,33 @@ const cancelAddOfferBtn = document.getElementById('cancelAddOfferBtn');
 const btnSubmitAddOffer = document.getElementById('btnSubmitAddOffer');
 const btnAutoScanUrl = document.getElementById('btnAutoScanUrl');
 const inputOfferUrl = document.getElementById('inputOfferUrl');
+const inputOfferCompany = document.getElementById('inputOfferCompany');
+const inputOfferRole = document.getElementById('inputOfferRole');
 const inputOfferText = document.getElementById('inputOfferText');
 const aiScanProgress = document.getElementById('aiScanProgress');
 const aiProgressText = document.getElementById('aiProgressText');
+
+// Offer Description Card in Detail View
+const companyOfferDescCard = document.getElementById('companyOfferDescCard');
+const offerDescCardRole = document.getElementById('offerDescCardRole');
+const offerDescTextContent = document.getElementById('offerDescTextContent');
+const toggleOfferDescBtn = document.getElementById('toggleOfferDescBtn');
+const offerDescCollapseIcon = document.getElementById('offerDescCollapseIcon');
+const offerDescBodyContent = document.getElementById('offerDescBodyContent');
 
 // Permanent Gemini AI Configuration
 const DEFAULT_GEMINI_API_KEY = (typeof atob === 'function') 
   ? atob('QVEuQWI4Uk42SUpDSDdiTVRHQzNUdjVnQ1haQmxCd21GbGZ6TjlRdmVqcnhLMEhxSFVBZUE=')
   : Buffer.from('QVEuQWI4Uk42SUpDSDdiTVRHQzNUdjVnQ1haQmxCd21GbGZ6TjlRdmVqcnhLMEhxSFVBZUE=', 'base64').toString('utf-8');
 
-// Specialized 2-Stage Pipeline:
-// Stage 1: Scan links & job announcements using 2.5 Flash (with resilient auto-fallback)
-const SCAN_AI_MODELS = [
-  'gemini-2.5-flash',
-  'gemini-3.8-flash',
+// Resilient AI Model Pipeline: Prioritizes active, high-quota models with instant fallback
+const AI_GENERATION_MODELS = [
   'gemini-3.6-flash',
-  'gemini-3.5-flash-lite',
-  'gemini-flash-lite-latest'
-];
-
-// Stage 2: Deep synthesis of tailored CV and Cover Letter using 2.5 Pro (with resilient auto-fallback)
-const GENERATION_AI_MODELS = [
-  'gemini-2.5-pro',
-  'gemini-3.1-pro-preview',
-  'gemini-pro-latest',
+  'gemini-3.1-flash-lite',
   'gemini-3.8-flash',
-  'gemini-3.6-flash',
-  'gemini-3.5-flash-lite',
-  'gemini-flash-lite-latest'
+  'gemini-3.7-flash',
+  'gemini-3.5-flash',
+  'gemini-flash-latest'
 ];
 
 // Cloud Sync Endpoint (Multi-device persistent sync)
@@ -591,6 +590,7 @@ function openCompanyDetail(companyId) {
 
   // Render Strategic Briefing Card immediately visible at top of detail view
   renderCompanyBriefing(comp);
+  renderCompanyOfferDesc(comp);
 
   // Render contextual dispatch buttons (Optimized for Webmail - No Mac required)
   renderDispatchButtons(comp);
@@ -733,6 +733,43 @@ function renderCompanyBriefing(company) {
       bodyContent.style.display = isHidden ? 'block' : 'none';
       collapseIcon.textContent = isHidden ? 'expand_less' : 'expand_more';
     });
+  }
+}
+
+// ============================================================
+// JOB VACANCY DESCRIPTION & REQUIREMENTS CARD
+// ============================================================
+function renderCompanyOfferDesc(company) {
+  const cardEl = document.getElementById('companyOfferDescCard');
+  if (!cardEl) return;
+
+  const desc = company.offerDescription || '';
+  if (!desc || desc.trim().length === 0) {
+    cardEl.style.display = 'none';
+    return;
+  }
+
+  cardEl.style.display = 'block';
+  const roleEl = document.getElementById('offerDescCardRole');
+  if (roleEl) {
+    roleEl.textContent = company.roleName ? `${company.roleName} — ${company.name}` : `Descripción de la Oferta — ${company.name}`;
+  }
+
+  const textEl = document.getElementById('offerDescTextContent');
+  if (textEl) {
+    textEl.textContent = desc;
+  }
+
+  const toggleBtn = document.getElementById('toggleOfferDescBtn');
+  const bodyEl = document.getElementById('offerDescBodyContent');
+  const iconEl = document.getElementById('offerDescCollapseIcon');
+
+  if (toggleBtn && bodyEl && iconEl) {
+    toggleBtn.onclick = () => {
+      const isHidden = bodyEl.style.display === 'none';
+      bodyEl.style.display = isHidden ? 'block' : 'none';
+      iconEl.textContent = isHidden ? 'expand_less' : 'expand_more';
+    };
   }
 }
 
@@ -1047,6 +1084,22 @@ function setupAddOfferModal() {
     btnAutoScanUrl.addEventListener('click', handleAutoScanUrl);
   }
 
+  if (inputOfferUrl) {
+    const handleUrlChange = () => {
+      const u = inputOfferUrl.value.trim();
+      if (!u) return;
+      const meta = parseOfferUrlMetadata(u);
+      if (inputOfferCompany && !inputOfferCompany.value && meta.company) {
+        inputOfferCompany.value = meta.company;
+      }
+      if (inputOfferRole && !inputOfferRole.value && meta.role) {
+        inputOfferRole.value = meta.role;
+      }
+    };
+    inputOfferUrl.addEventListener('input', handleUrlChange);
+    inputOfferUrl.addEventListener('paste', () => setTimeout(handleUrlChange, 60));
+  }
+
   if (btnSubmitAddOffer) {
     btnSubmitAddOffer.addEventListener('click', handleProcessAddOffer);
   }
@@ -1202,7 +1255,7 @@ async function requestGeminiModels(models, promptText, onProgress, stepLabel) {
 }
 
 async function handleAutoScanUrl() {
-  const url = inputOfferUrl.value.trim();
+  const url = inputOfferUrl ? inputOfferUrl.value.trim() : '';
   if (!url) {
     showToast('Por favor escribe o pega un enlace primero');
     return;
@@ -1213,16 +1266,22 @@ async function handleAutoScanUrl() {
 
   try {
     const { meta, scrapedText } = await extractOfferFromUrl(url);
+    if (meta.company && inputOfferCompany && !inputOfferCompany.value) {
+      inputOfferCompany.value = meta.company;
+    }
+    if (meta.role && inputOfferRole && !inputOfferRole.value) {
+      inputOfferRole.value = meta.role;
+    }
     if (scrapedText) {
-      inputOfferText.value = scrapedText;
+      if (inputOfferText) inputOfferText.value = scrapedText;
       showToast('Información extraída de la vacante.');
     } else {
       let infoMsg = 'Enlace listo.';
       if (meta.company || meta.role) {
-        infoMsg = `Detectado: ${meta.role || ''} ${meta.company ? 'en ' + meta.company : ''}`;
+        infoMsg = `Detectado: ${meta.role || ''} ${meta.company ? 'en ' + meta.company : ''}`.trim();
       }
       showToast(infoMsg);
-      if (!inputOfferText.value) {
+      if (inputOfferText && !inputOfferText.value) {
         inputOfferText.placeholder = 'Enlace analizado. Pulsa "Analizar y Crear Candidatura" o añade notas opcionales aquí.';
       }
     }
@@ -1236,25 +1295,29 @@ async function handleAutoScanUrl() {
 }
 
 async function handleProcessAddOffer() {
-  const url = inputOfferUrl.value.trim();
-  const text = inputOfferText.value.trim();
+  const url = inputOfferUrl ? inputOfferUrl.value.trim() : '';
+  const text = inputOfferText ? inputOfferText.value.trim() : '';
+  const userCompany = inputOfferCompany ? inputOfferCompany.value.trim() : '';
+  const userRole = inputOfferRole ? inputOfferRole.value.trim() : '';
 
-  if (!url && !text) {
-    showToast('Por favor introduce un enlace de LinkedIn o el texto de la oferta');
+  if (!url && !text && !userCompany) {
+    showToast('Por favor introduce un enlace, el nombre de la empresa o el texto de la vacante');
     return;
   }
 
   aiScanProgress.style.display = 'flex';
   btnSubmitAddOffer.disabled = true;
-  aiProgressText.textContent = 'Iniciando escaneo de la vacante...';
+  aiProgressText.textContent = 'Analizando vacante y preparando candidatura...';
 
   const { meta, scrapedText } = await extractOfferFromUrl(url);
   const finalDescription = (text || scrapedText || '').trim();
+  const detectedCompany = userCompany || meta.company || '';
+  const detectedRole = userRole || meta.role || '';
 
-  const contentToAnalyze = [
+  const promptContent = [
     url ? `Enlace de la oferta: ${url}` : '',
-    meta.role ? `Rol detectado en el enlace: ${meta.role}` : '',
-    meta.company ? `Empresa detectada en el enlace: ${meta.company}` : '',
+    detectedCompany ? `Nombre de la empresa indicado: ${detectedCompany}` : '',
+    detectedRole ? `Puesto o vacante indicado: ${detectedRole}` : '',
     meta.location ? `Ubicación detectada: ${meta.location}` : '',
     finalDescription ? `Descripción / Requisitos de la vacante:\n${finalDescription}` : ''
   ].filter(Boolean).join('\n\n');
@@ -1262,89 +1325,77 @@ async function handleProcessAddOffer() {
   let parsedResult = null;
 
   try {
-    // Stage 1: Scan link / announcement with Flash
-    const scanPrompt = `
-Eres un analista de talento senior. Analiza la siguiente oferta de empleo o enlace y extrae los datos clave en formato JSON.
+    const consolidatedPrompt = `
+Eres un Headhunter Senior y Director de Selección de alto nivel en España.
+Tu tarea es analizar la siguiente oportunidad de empleo y redactar una adaptación de candidatura de máximo impacto para Ignacio Fernández López (Nacho).
 
-Contenido a analizar:
-"""
-${contentToAnalyze}
-"""
+DATOS DISPONIBLES DE LA VACANTE:
+${promptContent}
+
+PERFIL PROFESIONAL DE IGNACIO FERNÁNDEZ LÓPEZ:
+- Formación: Graduado en Administración y Dirección de Empresas (ADE) por la Universidad de Málaga; Máster GESCO en Dirección Comercial y Marketing por ESIC Business & Marketing School; Savills University.
+- Trayectoria: 5 años consolidado en Savills Málaga (consultora inmobiliaria multinacional).
+- Competencias y logros demostrables:
+  * Coordinación de auditorías técnicas (Technical Due Diligence) y urbanísticas de activos comerciales, industriales y residenciales en Málaga y Costa del Sol.
+  * Supervisión y optimización de cuentas de resultados (P&L), presupuestos de CAPEX/OPEX y seguimiento riguroso de KPIs con 100% de cumplimiento en plazos y presupuestos.
+  * Project Management y dirección operativa de servicios e inmuebles, interlocución de alto nivel con contratistas, fondos de inversión y propiedad.
+  * Análisis de viabilidad técnico-económica, prospección de ubicaciones estratégicas, valoraciones inmobiliarias (metodología ECO y RICS) y negociación de contratos de arrendamiento y compraventa.
+  * Máximo rigor analítico, gestión organizativa impecable y orientación a rentabilidad e impacto medible desde el primer día.
+
+DIRECTRICES OBLIGATORIAS:
+1. Extrae el nombre exacto de la empresa${detectedCompany ? ` (Usa obligatoriamente "${detectedCompany}")` : ''}. NUNCA uses nombres genéricos ficticios como "Empresa Estratégica".
+2. Extrae el puesto o rol exacto${detectedRole ? ` (Usa "${detectedRole}")` : ''}.
+3. Redacta una Carta de Presentación de 3 párrafos de alto impacto dirigida a la empresa y puesto concretos, con tono ejecutivo, seguro, persuasivo y formal. Menciona con naturalidad los 5 años en Savills Málaga y cómo su experiencia en ADE + ESIC genera valor inmediato en los retos concretos de este puesto.
+4. Redacta un Resumen Ejecutivo ATS para el CV (3-4 líneas) totalmente orientado a las palabras clave y requisitos de esta oferta destacando su bagaje en Savills Málaga.
+5. Redacta el encaje estratégico (whyIgnacioFits) en 3 frases contundentes.
 
 Responde EXCLUSIVAMENTE con un JSON válido con esta estructura:
 {
-  "name": "Nombre exacto de la empresa",
-  "category": "Sector o actividad de la empresa (ej: Supermercados & Gran Distribución / Real Estate / Logística / Proptech)",
-  "location": "Ubicación (ej: Málaga / Costa del Sol / Híbrido)",
+  "name": "${detectedCompany || 'Nombre exacto de la empresa'}",
+  "category": "Sector de la empresa (ej: Supermercados & Gran Distribución / Real Estate / Logística / Proptech / Operaciones)",
+  "location": "${meta.location || 'Málaga / Costa del Sol'}",
   "priority": "alta",
   "contactTarget": "${url || 'portal de empleo'}",
   "channel": "${(url && url.includes('@')) ? 'direct_email' : 'portal'}",
-  "companyInfo": "Radiografía y modelo de negocio (2 frases concisas)",
-  "currentState": "Momento actual, retos 2026, plan de aperturas o contexto en Málaga (2 frases concisas)",
-  "roleName": "Puesto o vacante",
-  "keyRequirements": "Requisitos clave y funciones principales",
-  "defaultRole": "slug del rol más afín: area_manager_retail_ops, real_estate_valuation_advisory, expansion_location_manager, operations_director_services, proptech_business_development, investment_analyst_capital_markets, technical_property_manager"
+  "companyInfo": "Radiografía y modelo de negocio de la empresa (2 frases concisas y fundamentadas)",
+  "currentState": "Momento actual, retos 2026, plan de crecimiento o contexto en Málaga (2 frases concisas)",
+  "roleName": "${detectedRole || 'Puesto o vacante'}",
+  "keyRequirements": "Requisitos clave y funciones principales de la vacante",
+  "defaultRole": "area_manager_retail_ops",
+  "whyIgnacioFits": "Argumento de por qué Ignacio encaja al 100%: combinación de ADE + Savills Málaga, conocimiento de suelo y locales en Costa del Sol, rigor en Due Diligence, operaciones y negociación (3 frases)",
+  "tailoredSummary": "Resumen ejecutivo ATS de 3-4 líneas totalmente adaptado a los requisitos.",
+  "tailoredCoverLetter": "Estimado/a Responsable de Selección de [Empresa]:\\n\\n[Párrafo 1: Candidatura para el puesto y alineación estratégica...]\\n\\n[Párrafo 2: Logros cuantitativos en Savills Málaga y formación ADE/ESIC aplicables a las responsabilidades...]\\n\\n[Párrafo 3: Por qué puedo aportar valor inmediato y propuesta de entrevista...]\\n\\nUn cordial saludo,\\nIgnacio Fernández López"
 }
 `;
 
-    const scanData = await requestGeminiModels(
-      SCAN_AI_MODELS,
-      scanPrompt,
+    parsedResult = await requestGeminiModels(
+      AI_GENERATION_MODELS,
+      consolidatedPrompt,
       (msg) => { aiProgressText.textContent = msg; },
-      'Escaneando enlace y requisitos de la vacante...'
+      'Analizando oferta y adaptando candidatura...'
     );
-
-    // Stage 2: Deep synthesis of tailored CV and Cover Letter with Pro
-    const genPrompt = `
-Eres un Headhunter Senior y consultor de talento de alto nivel en España.
-A partir de los datos analizados de la vacante, redacta una adaptación exhaustiva, profesional y de máximo impacto para la candidatura de Ignacio Fernández López (Nacho).
-
-DATOS EXTRAÍDOS DE LA VACANTE:
-- Empresa: ${scanData.name || 'Empresa'}
-- Sector: ${scanData.category || 'Sector'}
-- Ubicación: ${scanData.location || 'Málaga'}
-- Puesto: ${scanData.roleName || 'Vacante'}
-- Requisitos: ${scanData.keyRequirements || ''}
-- Contexto de la empresa: ${scanData.companyInfo || ''} / ${scanData.currentState || ''}
-
-PERFIL DE IGNACIO FERNÁNDEZ LÓPEZ:
-- Graduado en ADE (Universidad de Málaga)
-- Máster GESCO en Dirección Comercial y Marketing (ESIC Business & Marketing School)
-- Máster Savills University
-- 5 años de experiencia consolidada en Savills Málaga (consultoría inmobiliaria estratégica, Due Diligence técnica y urbanística, Project Management, supervisión operativa de activos, valoraciones masivas y negociación de contratos)
-
-Genera EXCLUSIVAMENTE un JSON válido con esta estructura:
-{
-  "whyIgnacioFits": "Argumento rotundo de por qué Ignacio encaja al 100%: combinación de ADE + Savills Málaga, conocimiento de suelo y locales en Costa del Sol, rigor en Due Diligence, operaciones y negociación (3 frases)",
-  "tailoredSummary": "Resumen ejecutivo ATS para el CV de 3-4 líneas totalmente adaptado a los requisitos de esta oferta destacando su bagaje en Savills Málaga y competencias clave",
-  "tailoredCoverLetter": "Estimado/a Responsable de Selección de ${scanData.name || 'la empresa'}:\\n\\n[Párrafo 1: Motivación y alineación con la vacante...]\\n\\n[Párrafo 2: Logros cuantitativos en ADE + Savills Málaga aplicables al puesto...]\\n\\n[Párrafo 3: Por qué puedo aportar valor inmediato y propuesta de reunión...]\\n\\nUn cordial saludo,\\nIgnacio Fernández López"
-}
-`;
-
-    const genData = await requestGeminiModels(
-      GENERATION_AI_MODELS,
-      genPrompt,
-      (msg) => { aiProgressText.textContent = msg; },
-      'Preparando CV y Carta de Presentación a medida...'
-    );
-
-    parsedResult = {
-      ...scanData,
-      ...genData
-    };
   } catch (err) {
     console.warn('AI execution note, aplicando analizador integrado:', err);
-    parsedResult = fallbackParseOffer(url, finalDescription, meta);
+    parsedResult = fallbackParseOffer(url, finalDescription, {
+      company: detectedCompany,
+      role: detectedRole,
+      location: meta.location
+    });
   }
 
   aiProgressText.textContent = 'Guardando candidatura y sincronizando...';
 
   // Build Company Object
-  const safeName = parsedResult.name || meta.company || 'Nueva Oferta';
+  const safeName = parsedResult.name || detectedCompany || meta.company || 'Nueva Oferta';
+  const roleTitle = parsedResult.roleName || detectedRole || meta.role || '';
+  const offerDesc = finalDescription || parsedResult.keyRequirements || '';
   const slugId = 'custom-' + (safeName.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'oferta') + '-' + Date.now().toString(36).substr(-4);
+
   const newCompany = {
     id: slugId,
     name: safeName,
+    roleName: roleTitle,
+    offerDescription: offerDesc,
     category: parsedResult.category || 'Oportunidad Estratégica',
     priority: parsedResult.priority || 'alta',
     location: parsedResult.location || meta.location || 'Málaga, España',
@@ -1375,8 +1426,10 @@ Genera EXCLUSIVAMENTE un JSON válido con esta estructura:
   saveStatusToCloud(newCompany.id, 'Pendiente');
 
   // Reset form
-  inputOfferUrl.value = '';
-  inputOfferText.value = '';
+  if (inputOfferUrl) inputOfferUrl.value = '';
+  if (inputOfferCompany) inputOfferCompany.value = '';
+  if (inputOfferRole) inputOfferRole.value = '';
+  if (inputOfferText) inputOfferText.value = '';
   closeAddOfferModal();
 
   // Open detail view
@@ -1386,16 +1439,27 @@ Genera EXCLUSIVAMENTE un JSON válido con esta estructura:
 }
 
 function fallbackParseOffer(url, text, meta = {}) {
-  let companyName = meta.company || "Empresa Estratégica";
+  let companyName = meta.company || "";
+  let roleName = meta.role || "";
   let category = "Supermercados & Gran Distribución";
   let defaultRole = 'area_manager_retail_ops';
 
   const lines = (text || '').split('\n').map(l => l.trim()).filter(Boolean);
-  if (!meta.company && lines.length > 0) {
-    companyName = lines[0].replace(/^(oferta|vacante|empleo|puesto):?/i, '').trim().substring(0, 45);
+  if (!companyName && lines.length > 0) {
+    const firstLine = lines[0].replace(/^(oferta|vacante|empleo|puesto):?/i, '').trim();
+    if (firstLine.includes(' - ')) {
+      const parts = firstLine.split(' - ');
+      roleName = roleName || parts[0].trim();
+      companyName = parts[1].trim();
+    } else if (firstLine.length < 50) {
+      companyName = firstLine;
+    }
+  }
+  if (!companyName) {
+    companyName = "Empresa Candidata";
   }
 
-  const lower = ((text || '') + ' ' + (url || '') + ' ' + (meta.role || '')).toLowerCase();
+  const lower = ((text || '') + ' ' + (url || '') + ' ' + roleName).toLowerCase();
   if (lower.includes('supermercado') || lower.includes('tienda') || lower.includes('retail') || lower.includes('distribucion') || lower.includes('gerente')) {
     category = 'Supermercados & Gran Distribución';
     defaultRole = 'area_manager_retail_ops';
@@ -1416,19 +1480,22 @@ function fallbackParseOffer(url, text, meta = {}) {
     defaultRole = 'operations_director_services';
   }
 
+  const displayRole = roleName || 'la posición ofertada';
+
   return {
     name: companyName,
+    roleName: roleName,
     category: category,
     location: meta.location || "Málaga / Costa del Sol",
     priority: "alta",
     contactTarget: url || "portal de empleo",
     channel: (url && url.includes('@')) ? 'direct_email' : 'portal',
     defaultRole: defaultRole,
-    companyInfo: `Organización con actividad en el sector de ${category} con proyectos activos y requerimientos de gestión operativa en la provincia de Málaga.`,
+    companyInfo: `Organización con actividad en ${category} con proyectos activos y requerimientos de gestión operativa en la provincia de Málaga.`,
     currentState: `Fase de consolidación de operaciones e implantación de objetivos estratégicos 2026 en el mercado malagueño.`,
     whyIgnacioFits: `Ignacio aporta doble titulación en ADE y Dirección Comercial (ESIC) sumada a 5 años de rigor corporativo en Savills Málaga gestionando activos, cuentas de resultados y equipos técnicos.`,
-    tailoredSummary: `Profesional con 5 años de trayectoria en Savills Málaga, graduado en ADE y Máster en Dirección Comercial (ESIC). Especializado en optimización de operaciones, gestión de cuentas de resultados y liderazgo de equipos en entornos de alto rendimiento.`,
-    tailoredCoverLetter: `Estimado/a Responsable de Selección de ${companyName}:\n\nLe escribo para presentarle mi candidatura para la posición en ${companyName}. Con 5 años de trayectoria corporativa en Savills Málaga y formación superior en ADE y Dirección Comercial (ESIC), he coordinado auditorías técnicas, optimización de cuentas de resultados y supervisión de equipos con un 100% de cumplimiento en plazos.\n\nMi objetivo actual es volcar este rigor analítico y capacidad organizativa en ${companyName}, garantizando control operativo y superación de objetivos desde el primer día.\n\nEstaré encantado de mantener una entrevista para detallar cómo puedo sumar valor a su equipo.\n\nUn cordial saludo,\nIgnacio Fernández López`
+    tailoredSummary: `Profesional con 5 años de trayectoria en Savills Málaga, graduado en ADE y Máster en Dirección Comercial (ESIC). Especializado en optimización de operaciones, gestión de cuentas de resultados y liderazgo de proyectos en entornos de alto rendimiento.`,
+    tailoredCoverLetter: `Estimado/a Responsable de Selección de ${companyName}:\n\nLe escribo para presentarle mi candidatura para ${displayRole.startsWith('la') ? displayRole : 'la posición de ' + displayRole} en ${companyName}. Con 5 años de trayectoria corporativa en Savills Málaga y formación superior en ADE y Dirección Comercial (ESIC), he coordinado auditorías técnicas, optimización de cuentas de resultados y supervisión de proyectos con un 100% de cumplimiento en plazos y objetivos.\n\nMi propósito es volcar este rigor operativo, capacidad organizativa y conocimiento de mercado en ${companyName}, garantizando control de gestión y valor tangible desde el primer día.\n\nEstaré encantado de mantener una entrevista para detallar cómo puedo sumar valor a su equipo.\n\nUn cordial saludo,\nIgnacio Fernández López`
   };
 }
 

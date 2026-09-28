@@ -472,21 +472,25 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow: visible;
 }
 
-/* THE ONLY TOP HEADER BAR */
+/* THE ONLY TOP HEADER BAR - FIXED AT TOP AT ALL TIMES */
 .detail-unified-header {
-  height: 62px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  min-height: 62px;
   background: #FFFFFF;
   border-bottom: 3.5px solid var(--neo-border);
+  box-shadow: 0 4px 12px rgba(18, 18, 18, 0.12);
   padding: 0 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   flex-shrink: 0;
-  z-index: 30;
 }
 
 .detail-header-top-row {
@@ -602,7 +606,7 @@ body {
 /* DOCUMENT CANVAS & COMPACT INLINE TOOLBAR */
 .detail-content-canvas {
   flex: 1;
-  overflow-y: auto;
+  overflow: visible;
   padding: 20px 24px 60px 24px;
   display: flex;
   flex-direction: column;
@@ -1004,10 +1008,16 @@ body {
     font-size: 12px;
   }
 
-  /* DETAIL VIEW UNIFIED HEADER ON MOBILE */
+  /* DETAIL VIEW UNIFIED HEADER ON MOBILE - FIXED AT TOP AT ALL TIMES */
   .detail-unified-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
     height: auto;
     min-height: auto;
+    background: #FFFFFF;
+    border-bottom: 3.5px solid var(--neo-border);
+    box-shadow: 0 4px 10px rgba(18, 18, 18, 0.12);
     padding: 8px 10px;
     display: flex;
     flex-direction: column;
@@ -1501,6 +1511,20 @@ body {
 .briefing-card-inner {
   display: flex;
   flex-direction: column;
+}
+
+#offerDescTextContent {
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  color: var(--neo-text);
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 12px 14px;
+  background: #F8FAFC;
+  border: 2px solid var(--neo-border);
+  box-shadow: 2.5px 2.5px 0px var(--neo-border);
+  border-radius: 6px;
 }
 
 .briefing-top-bar {
@@ -2063,6 +2087,24 @@ body {
       <div id="companyBriefingCard" class="company-briefing-card no-print">
         <!-- Rendered dynamically by app.js -->
       </div>
+
+      <!-- Job Offer Description & Requirements Card (View full job ad) -->
+      <div id="companyOfferDescCard" class="company-briefing-card no-print" style="display: none; margin-bottom: 14px;">
+        <div class="briefing-card-inner">
+          <div class="briefing-top-bar" style="background: #E0F2FE;">
+            <div class="briefing-title-group">
+              <span class="briefing-kicker"><span class="material-symbols-outlined" style="font-size: 15px;">description</span> Vacante & Requisitos</span>
+              <h3 class="briefing-name" id="offerDescCardRole">Descripción de la Oferta de Empleo</h3>
+            </div>
+            <button id="toggleOfferDescBtn" class="btn-briefing-collapse" title="Minimizar / Expandir">
+              <span id="offerDescCollapseIcon" class="material-symbols-outlined" style="font-size: 16px;">expand_less</span>
+            </button>
+          </div>
+          <div class="briefing-body" id="offerDescBodyContent">
+            <div id="offerDescTextContent" style="font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; color: var(--neo-text);"></div>
+          </div>
+        </div>
+      </div>
       
       <!-- Compact Document Controls Bar directly above A4 paper -->
       <div class="doc-controls-bar no-print" id="docControlsBar">
@@ -2137,7 +2179,7 @@ body {
         <!-- Input 1: LinkedIn URL -->
         <div class="form-group">
           <label for="inputOfferUrl" class="form-label">
-            <span class="material-symbols-outlined" style="font-size: 15px;">link</span> Enlace de LinkedIn o Portal de Empleo
+            <span class="material-symbols-outlined" style="font-size: 15px;">link</span> Enlace de la Oferta (LinkedIn, Portal de Empleo...)
           </label>
           <div class="input-with-action">
             <input type="url" id="inputOfferUrl" class="neo-input" placeholder="https://www.linkedin.com/jobs/view/... o enlace de la vacante">
@@ -2145,15 +2187,31 @@ body {
               <span class="material-symbols-outlined" style="font-size: 14px;">search</span> Escanear
             </button>
           </div>
-          <span class="form-help">Si LinkedIn solicita inicio de sesión, puedes pegar el texto de la vacante abajo.</span>
+          <span class="form-help">Pega el enlace y pulsa "Escanear" para extraer automáticamente los datos.</span>
         </div>
 
-        <!-- Input 2: Job description text -->
+        <!-- Input 2 & 3: Company Name & Role Name (Visible so user can see and verify company) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label for="inputOfferCompany" class="form-label">
+              <span class="material-symbols-outlined" style="font-size: 15px;">domain</span> Nombre de la Empresa
+            </label>
+            <input type="text" id="inputOfferCompany" class="neo-input" placeholder="Ej: ALDI, Lidl, Mercadona, Savills...">
+          </div>
+          <div class="form-group">
+            <label for="inputOfferRole" class="form-label">
+              <span class="material-symbols-outlined" style="font-size: 15px;">badge</span> Puesto o Vacante
+            </label>
+            <input type="text" id="inputOfferRole" class="neo-input" placeholder="Ej: Responsable de Expansión, Area Manager...">
+          </div>
+        </div>
+
+        <!-- Input 4: Job description text -->
         <div class="form-group">
           <label for="inputOfferText" class="form-label">
-            <span class="material-symbols-outlined" style="font-size: 15px;">description</span> Texto / Descripción de la Oferta (Opcional si usas enlace)
+            <span class="material-symbols-outlined" style="font-size: 15px;">description</span> Descripción de la Oferta / Requisitos
           </label>
-          <textarea id="inputOfferText" class="neo-textarea" rows="4" placeholder="Pega aquí la descripción del puesto, empresa, requisitos o funciones si no tienes el enlace directo o si LinkedIn pide login..."></textarea>
+          <textarea id="inputOfferText" class="neo-textarea" rows="5" placeholder="Descripción del puesto, funciones o requisitos. Si LinkedIn requiere inicio de sesión, puedes copiar y pegar el texto del anuncio aquí para una adaptación precisa al 100%."></textarea>
         </div>
 
         <!-- Status & Progress Indicator -->
