@@ -33,6 +33,36 @@ body {
   flex-direction: column;
 }
 
+/* GOOGLE ICONS (MATERIAL SYMBOLS) - FLAT & CRISP */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: 400;
+  font-style: normal;
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+.spin-icon {
+  animation: neoSpin 1s infinite linear;
+  display: inline-block;
+}
+
+@keyframes neoSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* TOP APP HEADER */
 .app-header {
   height: 60px;
@@ -116,6 +146,9 @@ body {
 
 .btn-neo-pink { background: var(--neo-pink); color: #FFFFFF; }
 .btn-neo-pink:hover { background: var(--neo-pink-hover); }
+
+.btn-neo-white { background: #FFFFFF; color: var(--neo-text); }
+.btn-neo-white:hover { background: #F4F4F5; }
 
 /* ============================================================ */
 /* DASHBOARD VIEW (VISTA PRINCIPAL) */
@@ -375,6 +408,48 @@ body {
   cursor: pointer;
   outline: none;
   font-family: inherit;
+}
+
+.card-dash-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-card-discard,
+.btn-dash-discard {
+  font-size: 11px;
+  padding: 6px 9px;
+  background: #FFFFFF;
+  color: var(--neo-text);
+  border: 2px solid var(--neo-border);
+  box-shadow: 2px 2px 0px var(--neo-border);
+}
+
+.btn-card-discard:hover,
+.btn-dash-discard:hover {
+  background: #FFE4E6;
+  border-color: #E11D48;
+  color: #9F1239;
+}
+
+.btn-dash-restore {
+  font-size: 11px;
+  padding: 6px 9px;
+  background: var(--neo-yellow);
+  color: var(--neo-text);
+  border: 2px solid var(--neo-border);
+  box-shadow: 2px 2px 0px var(--neo-border);
+}
+
+.btn-dash-restore:hover {
+  background: var(--neo-yellow-hover);
+}
+
+#detailDiscardBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 /* ============================================================ */
@@ -965,9 +1040,15 @@ body {
     gap: 8px;
   }
 
-  .card-dash-footer .btn-neo {
-    justify-content: center;
+  .card-dash-actions {
+    display: flex;
+    gap: 8px;
     width: 100%;
+  }
+
+  .card-dash-actions .btn-neo {
+    flex: 1;
+    justify-content: center;
     padding: 10px 12px;
     font-size: 13px;
   }
@@ -1060,8 +1141,15 @@ body {
     font-size: 13px;
   }
 
-  .detail-header-right .status-select {
+  .detail-header-right #detailDiscardBtn {
     flex: 1;
+    justify-content: center;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .detail-header-right .status-select {
+    flex: 1 1 100%;
     padding: 9px 10px;
     font-size: 12px;
   }

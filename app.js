@@ -42,6 +42,7 @@ const detailCompanyName = document.getElementById('detailCompanyName');
 const detailPriorityBadge = document.getElementById('detailPriorityBadge');
 const detailCompanyMeta = document.getElementById('detailCompanyMeta');
 const detailStatusSelect = document.getElementById('detailStatusSelect');
+const detailDiscardBtn = document.getElementById('detailDiscardBtn');
 const dispatchButtonsGroup = document.getElementById('dispatchButtonsGroup');
 const detailDownloadAllBtn = document.getElementById('detailDownloadAllBtn');
 
@@ -73,19 +74,15 @@ const btnSubmitAddOffer = document.getElementById('btnSubmitAddOffer');
 const btnAutoScanUrl = document.getElementById('btnAutoScanUrl');
 const inputOfferUrl = document.getElementById('inputOfferUrl');
 const inputOfferText = document.getElementById('inputOfferText');
-const toggleAiConfigBtn = document.getElementById('toggleAiConfigBtn');
-const aiConfigBody = document.getElementById('aiConfigBody');
-const aiConfigChevron = document.getElementById('aiConfigChevron');
-const geminiApiKeyInput = document.getElementById('geminiApiKeyInput');
-const geminiModelSelect = document.getElementById('geminiModelSelect');
-const apiStatusBadge = document.getElementById('apiStatusBadge');
-const displayAiModel = document.getElementById('displayAiModel');
 const aiScanProgress = document.getElementById('aiScanProgress');
 const aiProgressText = document.getElementById('aiProgressText');
 
-// Default Gemini AI Configuration (Decoded at runtime)
-const DEFAULT_GEMINI_API_KEY = typeof atob !== 'undefined' ? atob('QVEuQWI4Uk42SUpDSDdiTVRHQzNUdjVnQ1haQmxCd21GbGZ6TjlRdmVqcnhLMEhxSFVBZUE=') : '';
-const DEFAULT_GEMINI_MODEL = 'gemini-3.8-flash';
+// Permanent Gemini AI Configuration
+const DEFAULT_GEMINI_API_KEY = (typeof atob === 'function') 
+  ? atob('QVEuQWI4Uk42SUpDSDdiTVRHQzNUdjVnQ1haQmxCd21GbGZ6TjlRdmVqcnhLMEhxSFVBZUE=')
+  : Buffer.from('QVEuQWI4Uk42SUpDSDdiTVRHQzNUdjVnQ1haQmxCd21GbGZ6TjlRdmVqcnhLMEhxSFVBZUE=', 'base64').toString('utf-8');
+const PRIMARY_AI_MODEL = 'gemini-3.8-flash';
+const FALLBACK_AI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.1-flash-lite'];
 
 // Cloud Sync Endpoint (Multi-device persistent sync)
 const CLOUD_SYNC_URL = 'https://api.restful-api.dev/objects/ff808181a09d98f701a0e4f51a0928e0';
@@ -219,6 +216,11 @@ function setupEventListeners() {
     downloadCompanyCvAndLetter(comp);
   });
 
+  // Discard Button in Detail View
+  if (detailDiscardBtn) {
+    detailDiscardBtn.addEventListener('click', toggleDiscardCurrentCompany);
+  }
+
   // Keyboard shortcut: Esc to return to dashboard
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && state.viewMode === 'detail') {
@@ -240,9 +242,32 @@ function updateCompanyStatus(companyId, status) {
   } else {
     detailStatusSelect.value = status;
     detailStatusSelect.setAttribute('data-val', status);
+    updateDiscardButtonState(status);
   }
 
   saveStatusToCloud(companyId, status);
+}
+
+function toggleDiscardCurrentCompany() {
+  const comp = getSelectedCompany();
+  if (!comp) return;
+  const currentStatus = state.statuses[comp.id] || 'Pendiente';
+  const newStatus = currentStatus === 'Descartado' ? 'Pendiente' : 'Descartado';
+  updateCompanyStatus(comp.id, newStatus);
+  showToast(newStatus === 'Descartado' ? 'Candidatura marcada como Descartada' : 'Candidatura reactivada como Pendiente');
+}
+
+function updateDiscardButtonState(status) {
+  if (!detailDiscardBtn) return;
+  if (status === 'Descartado') {
+    detailDiscardBtn.innerHTML = '<span class="material-symbols-outlined">undo</span> Reactivar';
+    detailDiscardBtn.className = 'btn-neo btn-neo-yellow is-discarded';
+    detailDiscardBtn.title = 'Reactivar esta candidatura (marcar como Pendiente)';
+  } else {
+    detailDiscardBtn.innerHTML = '<span class="material-symbols-outlined">cancel</span> Descartar';
+    detailDiscardBtn.className = 'btn-neo btn-neo-pink';
+    detailDiscardBtn.title = 'Descartar esta candidatura';
+  }
 }
 
 // ============================================================
@@ -332,13 +357,13 @@ function updateCloudSyncBadge(status) {
   if (!badge) return;
   if (status === 'syncing') {
     badge.className = 'badge-sync syncing';
-    badge.innerHTML = '🔄 Sincronizando...';
+    badge.innerHTML = '<span class="material-symbols-outlined spin-icon" style="font-size: 13px;">sync</span> Sincronizando...';
   } else if (status === 'synced') {
     badge.className = 'badge-sync';
-    badge.innerHTML = '☁️ Nube sincronizada';
+    badge.innerHTML = '<span class="material-symbols-outlined" style="font-size: 13px;">cloud_done</span> Nube sincronizada';
   } else {
     badge.className = 'badge-sync offline';
-    badge.innerHTML = '💾 Guardado local';
+    badge.innerHTML = '<span class="material-symbols-outlined" style="font-size: 13px;">cloud_off</span> Guardado local';
   }
 }
 
@@ -366,6 +391,7 @@ function renderDashboard() {
   // Calculate Metrics
   const total = state.companies.length;
   let sentCount = 0;
+  let discardedCount = 0;
   let highCount = 0;
   let directCount = 0;
   let portalCount = 0;
@@ -373,19 +399,23 @@ function renderDashboard() {
   state.companies.forEach(c => {
     const status = state.statuses[c.id] || 'Pendiente';
     if (status === 'Enviado') sentCount++;
-    if (c.priority === 'alta') highCount++;
+    if (status === 'Descartado') discardedCount++;
+    if (c.priority === 'alta' && status !== 'Descartado') highCount++;
     if (c.channel === 'direct_email') directCount++;
     if (c.channel === 'portal') portalCount++;
   });
 
-  const pendingCount = total - sentCount;
+  const pendingCount = Math.max(0, total - sentCount - discardedCount);
   metricTotal.textContent = total;
   metricSent.textContent = `${sentCount} / ${total}`;
   metricPending.textContent = pendingCount;
   metricHigh.textContent = highCount;
   metricChannels.textContent = `${directCount} Directo / ${portalCount} Web`;
   const allPill = document.querySelector('.pill-filter[data-filter="all"]');
-  if (allPill) allPill.textContent = `TODAS (${total})`;
+  if (allPill) allPill.innerHTML = `<span class="material-symbols-outlined" style="font-size: 14px;">apps</span> TODAS (${total})`;
+
+  const discardedPill = document.querySelector('.pill-filter[data-filter="Descartado"]');
+  if (discardedPill) discardedPill.innerHTML = `<span class="material-symbols-outlined" style="font-size: 14px;">cancel</span> DESCARTADAS (${discardedCount})`;
 
   // Update Bottom Navbar badges and active status
   if (navPendingBadge) navPendingBadge.textContent = pendingCount;
@@ -411,12 +441,13 @@ function renderDashboard() {
 
     // Pills
     const currentStatus = state.statuses[c.id] || 'Pendiente';
-    if (state.filter === 'alta') return c.priority === 'alta';
-    if (state.filter === 'direct_email') return c.channel === 'direct_email';
-    if (state.filter === 'portal') return c.channel === 'portal';
+    if (state.filter === 'alta') return c.priority === 'alta' && currentStatus !== 'Descartado';
+    if (state.filter === 'direct_email') return c.channel === 'direct_email' && currentStatus !== 'Descartado';
+    if (state.filter === 'portal') return c.channel === 'portal' && currentStatus !== 'Descartado';
     if (state.filter === 'Pendiente') return currentStatus === 'Pendiente';
     if (state.filter === 'Enviado') return currentStatus === 'Enviado';
     if (state.filter === 'En Proceso') return currentStatus === 'En Proceso' || currentStatus === 'Entrevista';
+    if (state.filter === 'Descartado') return currentStatus === 'Descartado';
 
     return true;
   });
@@ -428,13 +459,14 @@ function renderDashboard() {
     const isDirect = comp.channel === 'direct_email';
 
     return `
-      <div class="company-card-dash" data-comp-id="${comp.id}">
+      <div class="company-card-dash ${status === 'Descartado' ? 'card-is-discarded' : ''}" data-comp-id="${comp.id}">
         <div>
           <div class="card-dash-top">
             <h3 class="card-dash-title">${comp.name}</h3>
             <div style="display: flex; align-items: center; gap: 4px;">
               <span class="badge-priority badge-${comp.priority}">${comp.priority.toUpperCase()}</span>
-              ${comp.isCustom ? '<span class="badge-custom-offer">✨ IA</span>' : ''}
+              ${comp.isCustom ? '<span class="badge-custom-offer"><span class="material-symbols-outlined" style="font-size: 11px;">auto_awesome</span> IA</span>' : ''}
+              ${status === 'Descartado' ? '<span class="badge-priority" style="background:#fee2e2; color:#991b1b; border-color:#f87171;">DESCARTADA</span>' : ''}
             </div>
           </div>
 
@@ -442,16 +474,16 @@ function renderDashboard() {
 
           <div class="card-dash-meta">
             <div class="card-meta-line">
-              <strong>📍 Ubicación:</strong> <span>${comp.location}</span>
+              <strong><span class="material-symbols-outlined" style="font-size: 13px;">location_on</span> Ubicación:</strong> <span>${comp.location}</span>
             </div>
             <div class="card-meta-line" style="flex-direction: column; align-items: flex-start; gap: 2px;">
-              <strong>🎯 Rol Estratégico:</strong>
-              <span class="badge-rec-role">⭐ ${roleData.title}</span>
+              <strong><span class="material-symbols-outlined" style="font-size: 13px;">work</span> Rol Estratégico:</strong>
+              <span class="badge-rec-role">[Recomendado] ${roleData.title}</span>
             </div>
             <div class="card-meta-line" style="margin-top: 4px;">
               <strong>Canal:</strong> 
               <span class="card-meta-channel">
-                ${isDirect ? `✉️ Email Directo (${comp.contactTarget})` : `🌐 Portal Web`}
+                ${isDirect ? `<span class="material-symbols-outlined" style="font-size: 13px;">mail</span> Email Directo (${comp.contactTarget})` : `<span class="material-symbols-outlined" style="font-size: 13px;">language</span> Portal Web`}
               </span>
             </div>
           </div>
@@ -459,16 +491,23 @@ function renderDashboard() {
 
         <div class="card-dash-footer">
           <select class="status-select" data-dash-status-id="${comp.id}" data-val="${status}" onclick="event.stopPropagation()">
-            <option value="Pendiente" ${status === 'Pendiente' ? 'selected' : ''}>⏳ Pendiente</option>
-            <option value="Enviado" ${status === 'Enviado' ? 'selected' : ''}>✅ Enviado</option>
-            <option value="En Proceso" ${status === 'En Proceso' ? 'selected' : ''}>💬 En Proceso</option>
-            <option value="Entrevista" ${status === 'Entrevista' ? 'selected' : ''}>🎉 Entrevista</option>
-            <option value="Descartado" ${status === 'Descartado' ? 'selected' : ''}>✖️ Descartado</option>
+            <option value="Pendiente" ${status === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+            <option value="Enviado" ${status === 'Enviado' ? 'selected' : ''}>Enviado</option>
+            <option value="En Proceso" ${status === 'En Proceso' ? 'selected' : ''}>En Proceso</option>
+            <option value="Entrevista" ${status === 'Entrevista' ? 'selected' : ''}>Entrevista</option>
+            <option value="Descartado" ${status === 'Descartado' ? 'selected' : ''}>Descartado</option>
           </select>
 
-          <button class="btn-neo btn-neo-yellow" style="font-size: 11px; padding: 6px 11px;" data-open-comp="${comp.id}">
-            👉 Ver Pack y Enviar
-          </button>
+          <div class="card-dash-actions">
+            <button class="btn-neo ${status === 'Descartado' ? 'btn-dash-restore' : 'btn-dash-discard'}" data-dash-discard="${comp.id}" title="${status === 'Descartado' ? 'Reactivar oferta' : 'Descartar oferta'}" onclick="event.stopPropagation()">
+              <span class="material-symbols-outlined" style="font-size: 13px;">${status === 'Descartado' ? 'undo' : 'cancel'}</span>
+              <span>${status === 'Descartado' ? 'Reactivar' : 'Descartar'}</span>
+            </button>
+
+            <button class="btn-neo btn-neo-yellow" style="font-size: 11px; padding: 6px 11px;" data-open-comp="${comp.id}">
+              <span class="material-symbols-outlined" style="font-size: 13px;">visibility</span> Ver Pack
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -478,6 +517,18 @@ function renderDashboard() {
   companiesGrid.querySelectorAll('.company-card-dash').forEach(card => {
     card.addEventListener('click', () => {
       openCompanyDetail(card.dataset.compId);
+    });
+  });
+
+  // Add click listeners for discard buttons on cards
+  companiesGrid.querySelectorAll('[data-dash-discard]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const compId = btn.dataset.dashDiscard;
+      const curStatus = state.statuses[compId] || 'Pendiente';
+      const newStatus = curStatus === 'Descartado' ? 'Pendiente' : 'Descartado';
+      updateCompanyStatus(compId, newStatus);
+      showToast(newStatus === 'Descartado' ? 'Candidatura marcada como Descartada' : 'Candidatura reactivada como Pendiente');
     });
   });
 
@@ -507,11 +558,12 @@ function openCompanyDetail(companyId) {
   detailCompanyName.textContent = comp.name;
   detailPriorityBadge.textContent = comp.priority.toUpperCase();
   detailPriorityBadge.className = `badge-priority badge-${comp.priority}`;
-  detailCompanyMeta.innerHTML = `${comp.category} &bull; ${comp.location} &bull; ${comp.channel === 'direct_email' ? `✉️ ${comp.contactTarget}` : `🌐 Portal de empleo`}`;
+  detailCompanyMeta.innerHTML = `${comp.category} &bull; ${comp.location} &bull; ${comp.channel === 'direct_email' ? `<span class="material-symbols-outlined" style="font-size: 13px;">mail</span> ${comp.contactTarget}` : `<span class="material-symbols-outlined" style="font-size: 13px;">language</span> Portal de empleo`}`;
 
   const status = state.statuses[comp.id] || 'Pendiente';
   detailStatusSelect.value = status;
   detailStatusSelect.setAttribute('data-val', status);
+  updateDiscardButtonState(status);
 
   // Show/Hide views
   dashboardHeader.style.display = 'none';
@@ -538,7 +590,7 @@ function populateRoleSelector(recommendedRoleKey) {
     const isSelected = key === state.activeRoleKey;
     return `
       <option value="${key}" ${isSelected ? 'selected' : ''}>
-        ${isRec ? '⭐ [RECOMENDADO] ' : ''}${roleData.title}
+        ${isRec ? '[RECOMENDADO] ' : ''}${roleData.title}
       </option>
     `;
   }).join('');
@@ -551,7 +603,7 @@ function renderDispatchButtons(comp) {
     // Gmail dispatch button (native Gmail app on Android, webmail fallback on desktop)
     dispatchButtonsGroup.innerHTML = `
       <button id="gmailComposeBtn" class="btn-neo btn-neo-green" title="Abre directamente la app de Gmail con el destinatario, asunto y mensaje listos">
-        🚀 Enviar (Gmail)
+        <span class="material-symbols-outlined" style="font-size: 14px;">send</span> Enviar (Gmail)
       </button>
     `;
 
@@ -562,7 +614,7 @@ function renderDispatchButtons(comp) {
     // Portal application button
     dispatchButtonsGroup.innerHTML = `
       <a href="${comp.contactTarget}" target="_blank" class="btn-neo btn-neo-green" title="Abrir portal oficial de empleo en nueva pestaña">
-        🌐 Ir al Portal Web
+        <span class="material-symbols-outlined" style="font-size: 14px;">open_in_new</span> Ir al Portal Web
       </a>
     `;
   }
@@ -603,14 +655,14 @@ function renderCompanyBriefing(company) {
     <div class="briefing-card-inner">
       <div class="briefing-top-bar">
         <div class="briefing-title-group">
-          <span class="briefing-kicker">🏢 Radiografía y Posición Estratégica</span>
+          <span class="briefing-kicker"><span class="material-symbols-outlined" style="font-size: 15px;">domain</span> Radiografía y Posición Estratégica</span>
           <h3 class="briefing-name">${company.name}</h3>
         </div>
         <div class="briefing-meta-tags">
           <span class="badge-priority badge-${company.priority}">${company.priority.toUpperCase()}</span>
-          ${isCustom ? '<span class="badge-custom-offer">✨ Oferta con IA</span>' : ''}
+          ${isCustom ? '<span class="badge-custom-offer"><span class="material-symbols-outlined" style="font-size: 11px;">auto_awesome</span> Oferta adaptada</span>' : ''}
           <button id="toggleBriefingBodyBtn" class="btn-briefing-collapse" title="Minimizar / Expandir">
-            <span id="briefingCollapseIcon">▲</span>
+            <span id="briefingCollapseIcon" class="material-symbols-outlined" style="font-size: 16px;">expand_less</span>
           </button>
         </div>
       </div>
@@ -621,22 +673,22 @@ function renderCompanyBriefing(company) {
           <!-- Pillar 1: Radiografía -->
           <div class="briefing-col briefing-col-profile">
             <div class="briefing-col-header">
-              <span class="briefing-col-icon">🏢</span>
+              <span class="briefing-col-icon"><span class="material-symbols-outlined" style="font-size: 16px;">domain</span></span>
               <h4>Radiografía & Actividad</h4>
             </div>
             <p class="briefing-text">${company.companyInfo || 'Organización con operaciones activas y presencia en el mercado de Málaga y Andalucía.'}</p>
             <div class="briefing-quick-meta">
-              <div><strong>📍 Ubicación:</strong> ${company.location}</div>
-              <div><strong>👤 Interlocutor:</strong> ${company.contactRoleName || 'Dirección de Personas'}</div>
-              <div><strong>📞 Contacto:</strong> ${company.phone || 'Centralita'}</div>
-              <div><strong>✉️ Canal:</strong> ${company.channel === 'direct_email' ? `Email (${company.contactTarget})` : 'Portal Web'}</div>
+              <div><strong><span class="material-symbols-outlined" style="font-size: 13px;">location_on</span> Ubicación:</strong> ${company.location}</div>
+              <div><strong><span class="material-symbols-outlined" style="font-size: 13px;">person</span> Interlocutor:</strong> ${company.contactRoleName || 'Dirección de Personas'}</div>
+              <div><strong><span class="material-symbols-outlined" style="font-size: 13px;">phone</span> Contacto:</strong> ${company.phone || 'Centralita'}</div>
+              <div><strong><span class="material-symbols-outlined" style="font-size: 13px;">mail</span> Canal:</strong> ${company.channel === 'direct_email' ? `Email (${company.contactTarget})` : 'Portal Web'}</div>
             </div>
           </div>
 
           <!-- Pillar 2: Momento actual -->
           <div class="briefing-col briefing-col-state">
             <div class="briefing-col-header">
-              <span class="briefing-col-icon">📈</span>
+              <span class="briefing-col-icon"><span class="material-symbols-outlined" style="font-size: 16px;">trending_up</span></span>
               <h4>Momento Actual en Málaga (2026)</h4>
             </div>
             <p class="briefing-text">${company.currentState || 'Fase de consolidación y expansión operativa en la provincia de Málaga.'}</p>
@@ -645,15 +697,15 @@ function renderCompanyBriefing(company) {
           <!-- Pillar 3: Por qué encaja Ignacio -->
           <div class="briefing-col briefing-col-fit">
             <div class="briefing-col-header">
-              <span class="briefing-col-icon">🎯</span>
+              <span class="briefing-col-icon"><span class="material-symbols-outlined" style="font-size: 16px;">ads_click</span></span>
               <h4>Por Qué Es Idónea Su Candidatura</h4>
             </div>
             <p class="briefing-text fit-highlight">${company.whyIgnacioFits || 'Alineación completa entre su formación superior en ADE + Dirección Comercial y 5 años de rigor analítico en Savills.'}</p>
             
             <div class="briefing-strengths-strip">
-              <div class="strength-chip">🎓 <strong>ADE + GESCO</strong> (ESIC)</div>
-              <div class="strength-chip">⏱️ <strong>5 Años Savills</strong> (Asset & Ops)</div>
-              <div class="strength-chip">📊 <strong>Control P&L</strong> y Equipos</div>
+              <div class="strength-chip"><span class="material-symbols-outlined" style="font-size: 12px;">school</span> <strong>ADE + GESCO</strong> (ESIC)</div>
+              <div class="strength-chip"><span class="material-symbols-outlined" style="font-size: 12px;">history</span> <strong>5 Años Savills</strong> (Asset & Ops)</div>
+              <div class="strength-chip"><span class="material-symbols-outlined" style="font-size: 12px;">analytics</span> <strong>Control P&L</strong> y Equipos</div>
             </div>
           </div>
 
@@ -670,7 +722,7 @@ function renderCompanyBriefing(company) {
     toggleBtn.addEventListener('click', () => {
       const isHidden = bodyContent.style.display === 'none';
       bodyContent.style.display = isHidden ? 'block' : 'none';
-      collapseIcon.textContent = isHidden ? '▲' : '▼';
+      collapseIcon.textContent = isHidden ? 'expand_less' : 'expand_more';
     });
   }
 }
@@ -841,7 +893,7 @@ function renderPitch(company) {
     <div class="pitch-header">
       <h3>Propuesta Personalizada: ${company.name}</h3>
       <div class="pitch-meta">
-        <div class="pitch-meta-item"><strong>CANAL:</strong> ${company.channel === 'direct_email' ? '✉️ CORREO DIRECTO (Máxima efectividad)' : '🌐 PORTAL CORPORATIVO ATS'}</div>
+        <div class="pitch-meta-item"><strong>CANAL:</strong> ${company.channel === 'direct_email' ? '<span class="material-symbols-outlined" style="font-size: 13px;">mail</span> CORREO DIRECTO (Máxima efectividad)' : '<span class="material-symbols-outlined" style="font-size: 13px;">language</span> PORTAL CORPORATIVO ATS'}</div>
         <div class="pitch-meta-item"><strong>DESTINATARIO:</strong> ${company.contactTarget} (${company.contactRoleName || 'Dirección de Personas'})</div>
         <div class="pitch-meta-item"><strong>TELÉFONO:</strong> ${company.phone || 'Centralita'}</div>
       </div>
@@ -850,7 +902,9 @@ function renderPitch(company) {
     <div class="pitch-field">
       <div class="field-label-row">
         <span class="field-label">Línea de Asunto Recomendada</span>
-        <button id="copySubjectBtn" class="btn-neo btn-neo-yellow" style="padding: 4px 10px; font-size: 11px;">📋 Copiar Asunto</button>
+        <button id="copySubjectBtn" class="btn-neo btn-neo-yellow" style="padding: 4px 10px; font-size: 11px;">
+          <span class="material-symbols-outlined" style="font-size: 13px;">content_copy</span> Copiar Asunto
+        </button>
       </div>
       <input type="text" id="subjectInput" class="pitch-input" value="${company.emailSubject || `Candidatura ${company.name} | Ignacio Fernández López`}" readonly>
     </div>
@@ -860,7 +914,7 @@ function renderPitch(company) {
         <span class="field-label">Mensaje en tu voz natural (100% Humano y Directo)</span>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <button id="copyPitchBtn" class="btn-neo btn-neo-green" style="font-size: 12px; padding: 6px 12px;">
-            📋 Copiar Texto
+            <span class="material-symbols-outlined" style="font-size: 14px;">content_copy</span> Copiar Texto
           </button>
         </div>
       </div>
@@ -870,15 +924,15 @@ function renderPitch(company) {
     <div class="pitch-field">
       <span class="field-label" style="display:block; margin-bottom: 8px;">Estrategia de Contacto (Vía Correo Web)</span>
       <div class="strategy-box">
-        <strong>💡 Instrucciones de Envío para ${company.name}:</strong><br>
+        <strong><span class="material-symbols-outlined" style="font-size: 14px;">info</span> Instrucciones de Envío para ${company.name}:</strong><br>
         ${company.channel === 'direct_email' 
           ? `Este contacto se realiza por correo directo a <code>${company.contactTarget}</code>.<br>
-             1. Pulsa arriba en <strong>🚀 Enviar (Gmail)</strong>.<br>
+             1. Pulsa arriba en <strong>Enviar (Gmail)</strong>.<br>
              2. Se abrirá la app de Gmail con el destinatario, asunto y mensaje completados.<br>
              3. Adjunta el archivo PDF descargado y pulsa <strong>Enviar</strong>.` 
-          : `Accede a la oferta pulsando arriba en <strong>🌐 Ir al Portal Web</strong>.<br>
-             1. Pulsa en <strong>📥 Descargar</strong> o <strong>🖨️ Imprimir</strong> para tener tu CV listo.<br>
-             2. Pulsa en <strong>📋 Copiar Texto</strong> para pegar la carta adaptada en el formulario web.`}
+          : `Accede a la oferta pulsando arriba en <strong>Ir al Portal Web</strong>.<br>
+             1. Pulsa en <strong>Descargar</strong> o <strong>Imprimir</strong> para tener tu CV listo.<br>
+             2. Pulsa en <strong>Copiar Texto</strong> para pegar la carta adaptada en el formulario web.`}
       </div>
     </div>
   `;
@@ -1024,24 +1078,9 @@ function updateNavState(mode) {
 }
 
 // ============================================================
-// ADD OFFER / LINKEDIN WITH GEMINI FLASH (MODELO 3.8 / FLASH)
+// ADD OFFER / LINKEDIN WITH AI (MODELO GEMINI FLASH)
 // ============================================================
 function setupAddOfferModal() {
-  let savedApiKey = localStorage.getItem('gemini_api_key');
-  if (!savedApiKey) {
-    savedApiKey = DEFAULT_GEMINI_API_KEY;
-    localStorage.setItem('gemini_api_key', DEFAULT_GEMINI_API_KEY);
-  }
-  let savedModel = localStorage.getItem('gemini_model');
-  if (!savedModel || savedModel.includes('2.5') || savedModel.includes('2.0') || savedModel.includes('preview')) {
-    savedModel = DEFAULT_GEMINI_MODEL;
-    localStorage.setItem('gemini_model', DEFAULT_GEMINI_MODEL);
-  }
-
-  if (geminiApiKeyInput) geminiApiKeyInput.value = savedApiKey;
-  if (geminiModelSelect) geminiModelSelect.value = savedModel;
-  updateAiStatusBadge();
-
   if (closeAddOfferModalBtn) {
     closeAddOfferModalBtn.addEventListener('click', closeAddOfferModal);
   }
@@ -1056,29 +1095,6 @@ function setupAddOfferModal() {
     });
   }
 
-  if (toggleAiConfigBtn) {
-    toggleAiConfigBtn.addEventListener('click', () => {
-      const isHidden = aiConfigBody.style.display === 'none';
-      aiConfigBody.style.display = isHidden ? 'flex' : 'none';
-      aiConfigChevron.textContent = isHidden ? '▲' : '▼';
-    });
-  }
-
-  if (geminiApiKeyInput) {
-    geminiApiKeyInput.addEventListener('input', (e) => {
-      const key = e.target.value.trim() || DEFAULT_GEMINI_API_KEY;
-      localStorage.setItem('gemini_api_key', key);
-      updateAiStatusBadge();
-    });
-  }
-
-  if (geminiModelSelect) {
-    geminiModelSelect.addEventListener('change', (e) => {
-      localStorage.setItem('gemini_model', e.target.value);
-      updateAiStatusBadge();
-    });
-  }
-
   if (btnAutoScanUrl) {
     btnAutoScanUrl.addEventListener('click', handleAutoScanUrl);
   }
@@ -1088,35 +1104,10 @@ function setupAddOfferModal() {
   }
 }
 
-function updateAiStatusBadge() {
-  const key = localStorage.getItem('gemini_api_key') || DEFAULT_GEMINI_API_KEY;
-  const model = localStorage.getItem('gemini_model') || DEFAULT_GEMINI_MODEL;
-
-  if (displayAiModel) {
-    displayAiModel.textContent = model === 'gemini-3.8-flash' ? 'Gemini 3.8 Flash' : model;
-  }
-
-  if (apiStatusBadge) {
-    if (key) {
-      apiStatusBadge.textContent = '🔑 Gemini 3.8 Flash Activo';
-      apiStatusBadge.style.color = '#15803d';
-    } else {
-      apiStatusBadge.textContent = '⚙️ Sin API Key (Modo Local)';
-      apiStatusBadge.style.color = '#b45309';
-    }
-  }
-}
-
-function openAddOfferModal(openSettings = false) {
+function openAddOfferModal() {
   if (!addOfferModal) return;
   addOfferModal.style.display = 'flex';
-  if (openSettings && aiConfigBody) {
-    aiConfigBody.style.display = 'flex';
-    if (aiConfigChevron) aiConfigChevron.textContent = '▲';
-    if (geminiApiKeyInput) geminiApiKeyInput.focus();
-  } else {
-    if (inputOfferUrl) inputOfferUrl.focus();
-  }
+  if (inputOfferUrl) inputOfferUrl.focus();
 }
 
 function closeAddOfferModal() {
@@ -1124,6 +1115,154 @@ function closeAddOfferModal() {
   addOfferModal.style.display = 'none';
   if (aiScanProgress) aiScanProgress.style.display = 'none';
   if (btnSubmitAddOffer) btnSubmitAddOffer.disabled = false;
+}
+
+// Extract rich metadata from LinkedIn and other job URLs
+function parseOfferUrlMetadata(url) {
+  let company = '';
+  let role = '';
+  let location = '';
+  let jobId = '';
+
+  if (!url) return { company, role, location, jobId };
+
+  try {
+    const u = new URL(url);
+    const pathname = decodeURIComponent(u.pathname);
+    
+    // Match LinkedIn job view URLs: /jobs/view/slug-at-company-12345 or /jobs/view/12345
+    const jobMatch = pathname.match(/\/jobs\/view\/(?:([^\/]+)-)?(\d+)/i) || pathname.match(/\/jobs\/view\/([^\/?#]+)/i);
+    if (jobMatch) {
+      if (jobMatch[2]) jobId = jobMatch[2];
+      const slug = jobMatch[1] || jobMatch[0].replace(/\/jobs\/view\//, '');
+      
+      if (slug && slug.includes('-at-')) {
+        const [rolePart, companyPart] = slug.split('-at-');
+        role = rolePart.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).trim();
+        company = companyPart.replace(/-\d+$/, '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).trim();
+      } else if (slug && !/^\d+$/.test(slug)) {
+        role = slug.replace(/-\d+$/, '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).trim();
+      }
+    }
+
+    // Match /company/company-name
+    const compMatch = pathname.match(/\/company\/([^\/?#]+)/i);
+    if (compMatch && !company) {
+      company = compMatch[1].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).trim();
+    }
+
+    // Location detection
+    const fullText = (role + ' ' + pathname).toLowerCase();
+    if (fullText.includes('malaga') || fullText.includes('málaga')) {
+      location = 'Málaga, España';
+    } else if (fullText.includes('costa del sol')) {
+      location = 'Costa del Sol / Málaga';
+    } else if (fullText.includes('marbella')) {
+      location = 'Marbella / Costa del Sol';
+    } else if (fullText.includes('antequera')) {
+      location = 'Antequera / Málaga';
+    } else if (fullText.includes('remoto') || fullText.includes('remote')) {
+      location = 'Remoto / Málaga';
+    } else if (!location) {
+      location = 'Málaga, España';
+    }
+  } catch (e) {
+    console.warn('URL parsing notice:', e);
+  }
+
+  return { company, role, location, jobId };
+}
+
+// Scrape job offer contents via proxy with timeout
+async function extractOfferFromUrl(url) {
+  const meta = parseOfferUrlMetadata(url);
+  let scrapedText = '';
+
+  if (!url) return { meta, scrapedText };
+
+  try {
+    const jinaUrl = `https://r.jina.ai/${encodeURI(url)}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+    const res = await fetch(jinaUrl, {
+      headers: { 'Accept': 'text/plain' },
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+
+    if (res.ok) {
+      const text = await res.text();
+      // Ensure it's not a generic authwall or login prompt
+      if (!text.includes('LinkedIn: inicio de sesión') && !text.includes('Sign In') && !text.includes('authwall') && text.trim().length > 100) {
+        scrapedText = text.substring(0, 6000);
+      }
+    }
+  } catch (e) {
+    console.warn('URL scrape info:', e.message);
+  }
+
+  return { meta, scrapedText };
+}
+
+// Robust Multi-Model AI Completion (always starts with gemini-3.8-flash, with automatic seamless fallback)
+async function requestAiCompletion(promptText, onProgress) {
+  const apiKey = DEFAULT_GEMINI_API_KEY;
+  const modelsToTry = [PRIMARY_AI_MODEL, ...FALLBACK_AI_MODELS];
+  let lastError = null;
+
+  for (let i = 0; i < modelsToTry.length; i++) {
+    const model = modelsToTry[i];
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const maxAttempts = (i === 0) ? 2 : 1;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        if (onProgress) {
+          onProgress('Analizando oferta y adaptando requisitos...');
+        }
+
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: promptText }] }],
+            generationConfig: {
+              temperature: 0.2,
+              responseMimeType: 'application/json'
+            }
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const rawText = data.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '';
+          const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+          }
+          throw new Error('Respuesta JSON no detectada');
+        }
+
+        if (!res.ok) {
+          const errText = await res.text().catch(() => '');
+          lastError = new Error(`API error ${res.status}: ${errText}`);
+          if (res.status === 503 && attempt < maxAttempts) {
+            await new Promise(r => setTimeout(r, 1000));
+            continue;
+          }
+          // On 429 (quota) or after 503 retry, advance immediately to next model
+          break;
+        }
+      } catch (err) {
+        lastError = err;
+        if (attempt < maxAttempts) {
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      }
+    }
+  }
+
+  throw lastError || new Error('No se pudo conectar con el servicio de IA');
 }
 
 async function handleAutoScanUrl() {
@@ -1134,33 +1273,29 @@ async function handleAutoScanUrl() {
   }
 
   btnAutoScanUrl.disabled = true;
-  btnAutoScanUrl.innerHTML = '⏳ Escaneando...';
+  btnAutoScanUrl.innerHTML = '<span class="material-symbols-outlined spin-icon" style="font-size: 14px;">sync</span> Escaneando...';
 
   try {
-    const jinaUrl = `https://r.jina.ai/${encodeURI(url)}`;
-    const res = await fetch(jinaUrl, {
-      headers: { 'Accept': 'text/plain' }
-    });
-
-    if (res.ok) {
-      const text = await res.text();
-      if (text.includes('LinkedIn: inicio de sesión') || text.includes('Sign In') || text.includes('authwall')) {
-        showToast('LinkedIn requiere login. Copia el texto y pégalo abajo.');
-        inputOfferText.placeholder = 'LinkedIn requiere login. Copia y pega aquí el texto de la vacante...';
-        inputOfferText.focus();
-      } else {
-        inputOfferText.value = text.substring(0, 5000);
-        showToast('✅ Información extraída de la vacante.');
-      }
+    const { meta, scrapedText } = await extractOfferFromUrl(url);
+    if (scrapedText) {
+      inputOfferText.value = scrapedText;
+      showToast('Información extraída de la vacante.');
     } else {
-      showToast('No se pudo acceder automáticamente al enlace. Copia el texto abajo.');
+      let infoMsg = 'Enlace listo.';
+      if (meta.company || meta.role) {
+        infoMsg = `Detectado: ${meta.role || ''} ${meta.company ? 'en ' + meta.company : ''}`;
+      }
+      showToast(infoMsg);
+      if (!inputOfferText.value) {
+        inputOfferText.placeholder = 'Enlace analizado. Pulsa "Analizar y Crear Candidatura" o añade notas opcionales aquí.';
+      }
     }
   } catch (err) {
-    console.warn('Auto-scan warning:', err);
-    showToast('No se pudo leer el enlace directamente. Copia y pega el texto de la oferta.');
+    console.warn('Auto-scan notice:', err);
+    showToast('Enlace listo para procesar.');
   } finally {
     btnAutoScanUrl.disabled = false;
-    btnAutoScanUrl.innerHTML = '🔍 Auto-Escanear';
+    btnAutoScanUrl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 14px;">search</span> Escanear';
   }
 }
 
@@ -1177,26 +1312,31 @@ async function handleProcessAddOffer() {
   btnSubmitAddOffer.disabled = true;
   aiProgressText.textContent = 'Analizando requisitos de la oferta...';
 
-  const apiKey = localStorage.getItem('gemini_api_key') || DEFAULT_GEMINI_API_KEY;
-  const model = localStorage.getItem('gemini_model') || DEFAULT_GEMINI_MODEL;
+  const { meta, scrapedText } = await extractOfferFromUrl(url);
+  const finalDescription = (text || scrapedText || '').trim();
 
-  const contentToAnalyze = (text ? `Texto de la oferta:\n${text}\n\n` : '') + (url ? `Enlace de la oferta: ${url}` : '');
+  const contentToAnalyze = [
+    url ? `Enlace de la oferta: ${url}` : '',
+    meta.role ? `Rol detectado en el enlace: ${meta.role}` : '',
+    meta.company ? `Empresa detectada en el enlace: ${meta.company}` : '',
+    meta.location ? `Ubicación detectada: ${meta.location}` : '',
+    finalDescription ? `Descripción / Requisitos de la vacante:\n${finalDescription}` : ''
+  ].filter(Boolean).join('\n\n');
 
   let parsedResult = null;
 
-  if (apiKey) {
-    try {
-      aiProgressText.textContent = `Analizando con ${model}...`;
-      const geminiPrompt = `
-Eres un Headhunter Senior y experto consultor de selección en España.
-Tu tarea es analizar la siguiente oferta de empleo o empresa y adaptar minuciosamente la candidatura de Ignacio Fernández López (Nacho).
+  try {
+    aiProgressText.textContent = 'Escaneando oferta y adaptando candidatura...';
+    const geminiPrompt = `
+Eres un Headhunter Senior y consultor de selección de alto nivel en España.
+Tu tarea es analizar la siguiente oferta de empleo o empresa y redactar una adaptación exhaustiva, profesional y de máximo impacto para la candidatura de Ignacio Fernández López (Nacho).
 
 Perfil de Ignacio:
 - Graduado en ADE (Universidad de Málaga)
 - Máster GESCO en Dirección Comercial y Marketing (ESIC Business & Marketing School)
 - Máster Savills University
-- 5 años de experiencia consolidada en Savills Málaga (Consultoría, Valoraciones RICS/ECO masivas, Due Diligence, Project Management, Asset Management, Auditorías técnicas)
-- Busca roles de responsabilidad y liderazgo en Málaga / Costa del Sol:
+- 5 años de experiencia consolidada en Savills Málaga (Consultoría inmobiliaria estratégica, Valoraciones RICS/ECO masivas, Due Diligence técnica y urbanística, Project Management, Asset Management, supervisión operativa de activos y equipos)
+- Áreas y roles de responsabilidad que busca en Málaga / Costa del Sol:
   * Gerente de Supermercados / Retail Operations / Area Manager (gestión de tiendas, P&L, control de mermas, equipos, logística)
   * Real Estate Valuation & Advisory
   * Responsable de Expansión & Localizaciones
@@ -1205,7 +1345,7 @@ Perfil de Ignacio:
   * Análisis de Inversiones / Real Estate Capital Markets
   * Technical Property & Facility Manager
 
-Oferta o empresa a analizar:
+Oferta o enlace a analizar:
 """
 ${contentToAnalyze}
 """
@@ -1216,74 +1356,36 @@ Responde EXCLUSIVAMENTE con un JSON válido con esta estructura exacta:
   "category": "Sector o actividad de la empresa (ej: Supermercados & Gran Distribución / Real Estate / Logística / Proptech)",
   "location": "Ubicación (ej: Málaga / Costa del Sol / Híbrido)",
   "priority": "alta",
-  "contactTarget": "email de contacto si aparece, o enlace de la oferta",
-  "channel": "direct_email o portal",
-  "companyInfo": "Radiografía clara y modelo de negocio de la empresa (2-3 frases concisas)",
-  "currentState": "Momento actual, retos 2026, aperturas o contexto en Málaga (2 frases concisas)",
-  "whyIgnacioFits": "Argumento de impacto de por qué Ignacio encaja al 100% en esta posición y empresa (3 frases con métricas y valor)",
-  "defaultRole": "slug del rol: area_manager_retail_ops, real_estate_valuation_advisory, expansion_location_manager, operations_director_services, proptech_business_development, investment_analyst_capital_markets, technical_property_manager",
-  "tailoredSummary": "Resumen ejecutivo para el CV de 3-4 líneas totalmente adaptado a los requisitos de esta oferta",
-  "tailoredCoverLetter": "Estimado/a Responsable de Selección:\\n\\n[Párrafo 1: Motivación y alineación con la vacante...]\\n\\n[Párrafo 2: Logros cuantitativos en ADE + Savills Málaga aplicables al puesto...]\\n\\n[Párrafo 3: Por qué puedo aportar valor inmediato y propuesta de reunión...]\\n\\nUn cordial saludo,\\nIgnacio Fernández López"
+  "contactTarget": "${url || 'portal de empleo'}",
+  "channel": "${(url && url.includes('@')) ? 'direct_email' : 'portal'}",
+  "companyInfo": "Radiografía clara y modelo de negocio de la empresa (2-3 frases concisas y profesionales)",
+  "currentState": "Momento actual, retos 2026, plan de aperturas o contexto en Málaga (2 frases concisas)",
+  "whyIgnacioFits": "Argumento rotundo de por qué Ignacio encaja al 100%: combinación de ADE + Savills Málaga, conocimiento de suelo y locales en Costa del Sol, rigor en Due Diligence, operaciones y negociación (3 frases)",
+  "defaultRole": "slug del rol más afín: area_manager_retail_ops, real_estate_valuation_advisory, expansion_location_manager, operations_director_services, proptech_business_development, investment_analyst_capital_markets, technical_property_manager",
+  "tailoredSummary": "Resumen ejecutivo ATS para el CV de 3-4 líneas totalmente adaptado a los requisitos de esta oferta destacando su bagaje en Savills Málaga y competencias clave",
+  "tailoredCoverLetter": "Estimado/a Responsable de Selección de [Nombre de Empresa]:\\n\\n[Párrafo 1: Motivación y alineación con la vacante...]\\n\\n[Párrafo 2: Logros cuantitativos en ADE + Savills Málaga aplicables al puesto...]\\n\\n[Párrafo 3: Por qué puedo aportar valor inmediato y propuesta de reunión...]\\n\\nUn cordial saludo,\\nIgnacio Fernández López"
 }
 `;
 
-      const targetModel = model || 'gemini-3.8-flash';
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`;
-      let response = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: geminiPrompt }] }]
-        })
-      });
-
-      // Handle transient high demand (503) with a quick retry
-      if (response.status === 503) {
-        aiProgressText.textContent = `Reintentando análisis con ${targetModel}...`;
-        await new Promise(r => setTimeout(r, 1200));
-        response = await fetch(geminiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: geminiPrompt }] }]
-          })
-        });
-      }
-
-      if (!response.ok) {
-        throw new Error(`Error en API (${response.status}): ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const rawText = data.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '';
-      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        parsedResult = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error('No se detectó bloque JSON en la respuesta de Gemini');
-      }
-    } catch (err) {
-      console.warn('Error en Gemini Flash, recurriendo a análisis inteligente heurístico:', err);
-      showToast('Aviso: Se aplicó el Analizador Heurístico Integrado.');
-      parsedResult = fallbackParseOffer(url, text);
-    }
-  } else {
-    aiProgressText.textContent = 'Analizando con el Analizador Inteligente Local...';
-    await new Promise(r => setTimeout(r, 600));
-    parsedResult = fallbackParseOffer(url, text);
+    parsedResult = await requestAiCompletion(geminiPrompt, (statusText) => {
+      aiProgressText.textContent = statusText;
+    });
+  } catch (err) {
+    console.warn('AI execution note, aplicando analizador integrado:', err);
+    parsedResult = fallbackParseOffer(url, finalDescription, meta);
   }
 
-  aiProgressText.textContent = 'Guardando candidatura y sincronizando en la nube...';
+  aiProgressText.textContent = 'Guardando candidatura y sincronizando...';
 
   // Build Company Object
-  const safeName = parsedResult.name || 'Nueva Oferta';
+  const safeName = parsedResult.name || meta.company || 'Nueva Oferta';
   const slugId = 'custom-' + (safeName.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'oferta') + '-' + Date.now().toString(36).substr(-4);
   const newCompany = {
     id: slugId,
     name: safeName,
     category: parsedResult.category || 'Oportunidad Estratégica',
     priority: parsedResult.priority || 'alta',
-    location: parsedResult.location || 'Málaga, España',
+    location: parsedResult.location || meta.location || 'Málaga, España',
     phone: 'Centralita / LinkedIn',
     contactRoleName: 'Dirección de Personas / Selección',
     contactTarget: parsedResult.contactTarget || url || 'https://www.linkedin.com',
@@ -1318,20 +1420,20 @@ Responde EXCLUSIVAMENTE con un JSON válido con esta estructura exacta:
   // Open detail view
   renderDashboard();
   openCompanyDetail(newCompany.id);
-  showToast(`✨ ¡Oferta "${newCompany.name}" analizada y guardada!`);
+  showToast(`Candidatura "${newCompany.name}" analizada y guardada.`);
 }
 
-function fallbackParseOffer(url, text) {
-  let companyName = "Empresa Estratégica";
-  let category = "Retail & Supermercados";
+function fallbackParseOffer(url, text, meta = {}) {
+  let companyName = meta.company || "Empresa Estratégica";
+  let category = "Supermercados & Gran Distribución";
   let defaultRole = 'area_manager_retail_ops';
 
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  if (lines.length > 0) {
+  const lines = (text || '').split('\n').map(l => l.trim()).filter(Boolean);
+  if (!meta.company && lines.length > 0) {
     companyName = lines[0].replace(/^(oferta|vacante|empleo|puesto):?/i, '').trim().substring(0, 45);
   }
 
-  const lower = (text + ' ' + url).toLowerCase();
+  const lower = ((text || '') + ' ' + (url || '') + ' ' + (meta.role || '')).toLowerCase();
   if (lower.includes('supermercado') || lower.includes('tienda') || lower.includes('retail') || lower.includes('distribucion') || lower.includes('gerente')) {
     category = 'Supermercados & Gran Distribución';
     defaultRole = 'area_manager_retail_ops';
@@ -1352,25 +1454,10 @@ function fallbackParseOffer(url, text) {
     defaultRole = 'operations_director_services';
   }
 
-  if (url) {
-    try {
-      const u = new URL(url);
-      if (u.hostname.includes('linkedin.com')) {
-        const parts = u.pathname.split('/').filter(Boolean);
-        const compIdx = parts.indexOf('company');
-        if (compIdx !== -1 && parts[compIdx + 1]) {
-          companyName = parts[compIdx + 1].replace(/[-_]/g, ' ').toUpperCase();
-        }
-      } else {
-        companyName = u.hostname.replace('www.', '').split('.')[0].toUpperCase();
-      }
-    } catch (e) {}
-  }
-
   return {
     name: companyName,
     category: category,
-    location: "Málaga / Costa del Sol",
+    location: meta.location || "Málaga / Costa del Sol",
     priority: "alta",
     contactTarget: url || "portal de empleo",
     channel: (url && url.includes('@')) ? 'direct_email' : 'portal',
