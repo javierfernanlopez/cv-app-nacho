@@ -70,11 +70,7 @@ const addOfferModal = document.getElementById('addOfferModal');
 const closeAddOfferModalBtn = document.getElementById('closeAddOfferModalBtn');
 const cancelAddOfferBtn = document.getElementById('cancelAddOfferBtn');
 const btnSubmitAddOffer = document.getElementById('btnSubmitAddOffer');
-const btnAutoScanUrl = document.getElementById('btnAutoScanUrl');
 const inputOfferUrl = document.getElementById('inputOfferUrl');
-const inputOfferCompany = document.getElementById('inputOfferCompany');
-const inputOfferRole = document.getElementById('inputOfferRole');
-const inputOfferText = document.getElementById('inputOfferText');
 const aiScanProgress = document.getElementById('aiScanProgress');
 const aiProgressText = document.getElementById('aiProgressText');
 
@@ -91,14 +87,27 @@ const DEFAULT_GEMINI_API_KEY = (typeof atob === 'function')
   ? atob('QVEuQWI4Uk42SUpDSDdiTVRHQzNUdjVnQ1haQmxCd21GbGZ6TjlRdmVqcnhLMEhxSFVBZUE=')
   : Buffer.from('QVEuQWI4Uk42SUpDSDdiTVRHQzNUdjVnQ1haQmxCd21GbGZ6TjlRdmVqcnhLMEhxSFVBZUE=', 'base64').toString('utf-8');
 
-// Resilient AI Model Pipeline: Prioritizes active, high-quota models with instant fallback
-const AI_GENERATION_MODELS = [
-  'gemini-3.6-flash',
+// Specialized 2-Stage Pipeline:
+// Stage 1: Scan links & job announcements using Gemini 2.5 Flash (with resilient auto-fallback)
+const SCAN_AI_MODELS = [
+  'gemini-2.5-flash',
   'gemini-3.1-flash-lite',
+  'gemini-3.6-flash',
   'gemini-3.8-flash',
   'gemini-3.7-flash',
   'gemini-3.5-flash',
   'gemini-flash-latest'
+];
+
+// Stage 2: Deep synthesis of tailored CV and Cover Letter using Gemini 2.5 Pro (with resilient auto-fallback)
+const GENERATION_AI_MODELS = [
+  'gemini-2.5-pro',
+  'gemini-3.1-flash-lite',
+  'gemini-3.6-flash',
+  'gemini-3.8-flash',
+  'gemini-3.7-flash',
+  'gemini-3.5-flash',
+  'gemini-pro-latest'
 ];
 
 // Cloud Sync Endpoint (Multi-device persistent sync)
@@ -737,6 +746,173 @@ function renderCompanyBriefing(company) {
 }
 
 // ============================================================
+// JOB VACANCY DESCRIPTION CLEANER & FORMATTER
+// ============================================================
+function extractPureJobBody(rawText) {
+  if (!rawText) return "";
+
+  // Find job content start
+  const startMarkers = [
+    /\*\*About (The|the) (Role|Job)\*\*/i,
+    /About (The|the) (Role|Job)/i,
+    /Acerca del empleo/i,
+    /Sobre el empleo/i,
+    /Descripción de la oferta/i,
+    /Descripción del puesto/i,
+    /Job description/i,
+    /\*\*Key Responsibilities\*\*/i,
+    /Responsibilities/i,
+    /Requisitos del puesto/i,
+    /Funciones y responsabilidades/i
+  ];
+
+  let bestStartIdx = -1;
+  for (const regex of startMarkers) {
+    const match = rawText.match(regex);
+    if (match && (bestStartIdx === -1 || match.index < bestStartIdx)) {
+      bestStartIdx = match.index;
+    }
+  }
+
+  // Find job content end (before footer noise)
+  const endMarkers = [
+    /Referrals increase your chances/i,
+    /Similar Jobs/i,
+    /People also viewed/i,
+    /Get notified when a new job is posted/i,
+    /Set alert/i,
+    /Join or sign in to set job alerts/i
+  ];
+
+  let bestEndIdx = rawText.length;
+  for (const regex of endMarkers) {
+    const match = rawText.match(regex);
+    if (match && match.index > (bestStartIdx !== -1 ? bestStartIdx : 0) && match.index < bestEndIdx) {
+      bestEndIdx = match.index;
+    }
+  }
+
+  let text = (bestStartIdx !== -1) ? rawText.substring(bestStartIdx, bestEndIdx) : rawText;
+
+  // Remove markdown images and fix links
+  text = text
+    .replace(/!\[.*?\]\(.*?\)/g, "")
+    .replace(/\[(.*?)\]\([^\)]+\)/g, "$1")
+    .replace(/<[^>]+>/g, "");
+
+  // Filter noise lines
+  const noisePatterns = [
+    /skip to main content/i,
+    /join to apply/i,
+    /sign in/i,
+    /join now/i,
+    /clear text/i,
+    /expand search/i,
+    /email or phone/i,
+    /forgot password/i,
+    /by clicking continue/i,
+    /referrals increase/i,
+    /get notified when/i,
+    /set alert/i,
+    /report this job/i,
+    /show more\s+show less/i,
+    /similar jobs/i
+  ];
+
+  const rawLines = text.split("\n").map(l => l.trim());
+  const cleanLines = [];
+
+  for (const line of rawLines) {
+    if (!line) {
+      if (cleanLines.length && cleanLines[cleanLines.length - 1] !== "") {
+        cleanLines.push("");
+      }
+      continue;
+    }
+    if (noisePatterns.some(p => p.test(line))) continue;
+    cleanLines.push(line);
+  }
+
+  return cleanLines.join("\n").trim();
+}
+
+function formatOfferDescriptionToHTML(rawText) {
+  if (!rawText) return "";
+
+  // If already formatted HTML, return directly
+  if (rawText.includes('<h4 class="offer-desc-subhead"') || rawText.includes('<p class="offer-desc-paragraph"')) {
+    return rawText;
+  }
+
+  const cleanText = extractPureJobBody(rawText);
+  const lines = cleanText.split("\n").map(l => l.trim());
+
+  function escapeHtml(str) {
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  let html = "";
+  let inList = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line) {
+      if (inList) {
+        html += "</ul>";
+        inList = false;
+      }
+      continue;
+    }
+
+    // List item (* or - or •)
+    const listMatch = line.match(/^[\*\-•]\s+(.+)/);
+    if (listMatch) {
+      if (!inList) {
+        html += '<ul class="offer-desc-list">';
+        inList = true;
+      }
+      let content = escapeHtml(listMatch[1]).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      html += `<li>${content}</li>`;
+      continue;
+    }
+
+    if (inList) {
+      html += "</ul>";
+      inList = false;
+    }
+
+    // Heading (### or **Heading** on its own line)
+    const headingMatch = line.match(/^#+\s*(.+)/) || line.match(/^\*\*([^\*]+)\*\*$/);
+    if (headingMatch) {
+      html += `<h4 class="offer-desc-subhead">${escapeHtml(headingMatch[1].trim())}</h4>`;
+      continue;
+    }
+
+    // If line starts with **Header:** rest
+    const inlineHeaderMatch = line.match(/^\*\*([^\*]+)\*\*(.*)/);
+    if (inlineHeaderMatch) {
+      const headerPart = escapeHtml(inlineHeaderMatch[1].trim());
+      const restPart = escapeHtml(inlineHeaderMatch[2].trim()).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      html += `<h4 class="offer-desc-subhead">${headerPart}</h4>`;
+      if (restPart) {
+        html += `<p class="offer-desc-paragraph">${restPart}</p>`;
+      }
+      continue;
+    }
+
+    // Paragraph
+    let pContent = escapeHtml(line).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    html += `<p class="offer-desc-paragraph">${pContent}</p>`;
+  }
+
+  if (inList) {
+    html += "</ul>";
+  }
+
+  return html;
+}
+
+// ============================================================
 // JOB VACANCY DESCRIPTION & REQUIREMENTS CARD
 // ============================================================
 function renderCompanyOfferDesc(company) {
@@ -752,12 +928,12 @@ function renderCompanyOfferDesc(company) {
   cardEl.style.display = 'block';
   const roleEl = document.getElementById('offerDescCardRole');
   if (roleEl) {
-    roleEl.textContent = company.roleName ? `${company.roleName} — ${company.name}` : `Descripción de la Oferta — ${company.name}`;
+    roleEl.textContent = company.roleName ? `${company.roleName} — ${company.name}` : `${company.name}`;
   }
 
   const textEl = document.getElementById('offerDescTextContent');
   if (textEl) {
-    textEl.textContent = desc;
+    textEl.innerHTML = formatOfferDescriptionToHTML(desc);
   }
 
   const toggleBtn = document.getElementById('toggleOfferDescBtn');
@@ -1080,26 +1256,6 @@ function setupAddOfferModal() {
     });
   }
 
-  if (btnAutoScanUrl) {
-    btnAutoScanUrl.addEventListener('click', handleAutoScanUrl);
-  }
-
-  if (inputOfferUrl) {
-    const handleUrlChange = () => {
-      const u = inputOfferUrl.value.trim();
-      if (!u) return;
-      const meta = parseOfferUrlMetadata(u);
-      if (inputOfferCompany && !inputOfferCompany.value && meta.company) {
-        inputOfferCompany.value = meta.company;
-      }
-      if (inputOfferRole && !inputOfferRole.value && meta.role) {
-        inputOfferRole.value = meta.role;
-      }
-    };
-    inputOfferUrl.addEventListener('input', handleUrlChange);
-    inputOfferUrl.addEventListener('paste', () => setTimeout(handleUrlChange, 60));
-  }
-
   if (btnSubmitAddOffer) {
     btnSubmitAddOffer.addEventListener('click', handleProcessAddOffer);
   }
@@ -1174,9 +1330,9 @@ function parseOfferUrlMetadata(url) {
   return { company, role, location, jobId };
 }
 
-// Scrape job offer contents via proxy with timeout
+// Scrape job offer contents via proxy and extract rich metadata from title and body
 async function extractOfferFromUrl(url) {
-  const meta = parseOfferUrlMetadata(url);
+  let meta = parseOfferUrlMetadata(url);
   let scrapedText = '';
 
   if (!url) return { meta, scrapedText };
@@ -1184,7 +1340,7 @@ async function extractOfferFromUrl(url) {
   try {
     const jinaUrl = `https://r.jina.ai/${encodeURI(url)}`;
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 6000);
+    const timeout = setTimeout(() => controller.abort(), 9000);
     const res = await fetch(jinaUrl, {
       headers: { 'Accept': 'text/plain' },
       signal: controller.signal
@@ -1192,10 +1348,37 @@ async function extractOfferFromUrl(url) {
     clearTimeout(timeout);
 
     if (res.ok) {
-      const text = await res.text();
-      // Ensure it's not a generic authwall or login prompt
-      if (!text.includes('LinkedIn: inicio de sesión') && !text.includes('Sign In') && !text.includes('authwall') && text.trim().length > 100) {
-        scrapedText = text.substring(0, 6000);
+      const rawText = await res.text();
+
+      // Extract metadata from Title if URL slug was non-descriptive (e.g. /jobs/view/4465734255/)
+      const titleMatch = rawText.match(/Title:\s*([^|\n]+)/i);
+      if (titleMatch) {
+        const titleStr = titleMatch[1].trim();
+        const hiringMatch = titleStr.match(/^(.+?)\s+hiring\s+(.+?)\s+in\s+(.+)$/i);
+        const atMatch = titleStr.match(/^(.+?)\s+at\s+(.+?)(?:\s+in\s+(.+))?$/i);
+        const dashMatch = titleStr.match(/^(.+?)\s*[-–]\s*(.+?)(?:\s*[-–]\s*(.+))?$/);
+
+        if (hiringMatch) {
+          if (!meta.company) meta.company = hiringMatch[1].trim();
+          if (!meta.role) meta.role = hiringMatch[2].trim();
+          if (!meta.location) meta.location = hiringMatch[3].trim();
+        } else if (atMatch) {
+          if (!meta.role) meta.role = atMatch[1].trim();
+          if (!meta.company) meta.company = atMatch[2].trim();
+          if (!meta.location && atMatch[3]) meta.location = atMatch[3].trim();
+        } else if (dashMatch) {
+          if (!meta.role) meta.role = dashMatch[1].trim();
+          if (!meta.company) meta.company = dashMatch[2].trim();
+          if (!meta.location && dashMatch[3]) meta.location = dashMatch[3].trim();
+        }
+      }
+
+      // Extract pure job description body
+      const cleanBody = extractPureJobBody(rawText);
+      if (cleanBody && cleanBody.length > 80) {
+        scrapedText = cleanBody;
+      } else {
+        scrapedText = rawText.slice(0, 8000).replace(/!\[.*?\]\(.*?\)/g, '');
       }
     }
   } catch (e) {
@@ -1254,126 +1437,109 @@ async function requestGeminiModels(models, promptText, onProgress, stepLabel) {
   throw lastError || new Error('No se pudo conectar con el servicio tras varios intentos.');
 }
 
-async function handleAutoScanUrl() {
-  const url = inputOfferUrl ? inputOfferUrl.value.trim() : '';
-  if (!url) {
-    showToast('Por favor escribe o pega un enlace primero');
-    return;
-  }
-
-  btnAutoScanUrl.disabled = true;
-  btnAutoScanUrl.innerHTML = '<span class="material-symbols-outlined spin-icon" style="font-size: 14px;">sync</span> Escaneando...';
-
-  try {
-    const { meta, scrapedText } = await extractOfferFromUrl(url);
-    if (meta.company && inputOfferCompany && !inputOfferCompany.value) {
-      inputOfferCompany.value = meta.company;
-    }
-    if (meta.role && inputOfferRole && !inputOfferRole.value) {
-      inputOfferRole.value = meta.role;
-    }
-    if (scrapedText) {
-      if (inputOfferText) inputOfferText.value = scrapedText;
-      showToast('Información extraída de la vacante.');
-    } else {
-      let infoMsg = 'Enlace listo.';
-      if (meta.company || meta.role) {
-        infoMsg = `Detectado: ${meta.role || ''} ${meta.company ? 'en ' + meta.company : ''}`.trim();
-      }
-      showToast(infoMsg);
-      if (inputOfferText && !inputOfferText.value) {
-        inputOfferText.placeholder = 'Enlace analizado. Pulsa "Analizar y Crear Candidatura" o añade notas opcionales aquí.';
-      }
-    }
-  } catch (err) {
-    console.warn('Auto-scan notice:', err);
-    showToast('Enlace listo para procesar.');
-  } finally {
-    btnAutoScanUrl.disabled = false;
-    btnAutoScanUrl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 14px;">search</span> Escanear';
-  }
-}
-
 async function handleProcessAddOffer() {
   const url = inputOfferUrl ? inputOfferUrl.value.trim() : '';
-  const text = inputOfferText ? inputOfferText.value.trim() : '';
-  const userCompany = inputOfferCompany ? inputOfferCompany.value.trim() : '';
-  const userRole = inputOfferRole ? inputOfferRole.value.trim() : '';
 
-  if (!url && !text && !userCompany) {
-    showToast('Por favor introduce un enlace, el nombre de la empresa o el texto de la vacante');
+  if (!url) {
+    showToast('Por favor introduce el enlace de la vacante');
     return;
   }
 
   aiScanProgress.style.display = 'flex';
   btnSubmitAddOffer.disabled = true;
-  aiProgressText.textContent = 'Analizando vacante y preparando candidatura...';
+  aiProgressText.textContent = 'Escaneando enlace y analizando vacante...';
 
   const { meta, scrapedText } = await extractOfferFromUrl(url);
-  const finalDescription = (text || scrapedText || '').trim();
-  const detectedCompany = userCompany || meta.company || '';
-  const detectedRole = userRole || meta.role || '';
+  const finalDescription = (scrapedText || '').trim();
+  const detectedCompany = meta.company || '';
+  const detectedRole = meta.role || '';
 
   const promptContent = [
-    url ? `Enlace de la oferta: ${url}` : '',
-    detectedCompany ? `Nombre de la empresa indicado: ${detectedCompany}` : '',
-    detectedRole ? `Puesto o vacante indicado: ${detectedRole}` : '',
+    `Enlace de la oferta: ${url}`,
+    detectedCompany ? `Empresa detectada: ${detectedCompany}` : '',
+    detectedRole ? `Puesto o vacante detectado: ${detectedRole}` : '',
     meta.location ? `Ubicación detectada: ${meta.location}` : '',
-    finalDescription ? `Descripción / Requisitos de la vacante:\n${finalDescription}` : ''
+    finalDescription ? `Descripción y Requisitos de la vacante:\n${finalDescription.slice(0, 4000)}` : ''
   ].filter(Boolean).join('\n\n');
 
   let parsedResult = null;
 
   try {
-    const consolidatedPrompt = `
-Eres un Headhunter Senior y Director de Selección de alto nivel en España.
-Tu tarea es analizar la siguiente oportunidad de empleo y redactar una adaptación de candidatura de máximo impacto para Ignacio Fernández López (Nacho).
+    // Stage 1: Scan link / announcement with Gemini 2.5 Flash
+    const scanPrompt = `
+Eres un analista de talento senior. Analiza la siguiente oferta de empleo y extrae los datos clave en formato JSON.
 
-DATOS DISPONIBLES DE LA VACANTE:
+DATOS DISPONIBLES:
 ${promptContent}
-
-PERFIL PROFESIONAL DE IGNACIO FERNÁNDEZ LÓPEZ:
-- Formación: Graduado en Administración y Dirección de Empresas (ADE) por la Universidad de Málaga; Máster GESCO en Dirección Comercial y Marketing por ESIC Business & Marketing School; Savills University.
-- Trayectoria: 5 años consolidado en Savills Málaga (consultora inmobiliaria multinacional).
-- Competencias y logros demostrables:
-  * Coordinación de auditorías técnicas (Technical Due Diligence) y urbanísticas de activos comerciales, industriales y residenciales en Málaga y Costa del Sol.
-  * Supervisión y optimización de cuentas de resultados (P&L), presupuestos de CAPEX/OPEX y seguimiento riguroso de KPIs con 100% de cumplimiento en plazos y presupuestos.
-  * Project Management y dirección operativa de servicios e inmuebles, interlocución de alto nivel con contratistas, fondos de inversión y propiedad.
-  * Análisis de viabilidad técnico-económica, prospección de ubicaciones estratégicas, valoraciones inmobiliarias (metodología ECO y RICS) y negociación de contratos de arrendamiento y compraventa.
-  * Máximo rigor analítico, gestión organizativa impecable y orientación a rentabilidad e impacto medible desde el primer día.
-
-DIRECTRICES OBLIGATORIAS:
-1. Extrae el nombre exacto de la empresa${detectedCompany ? ` (Usa obligatoriamente "${detectedCompany}")` : ''}. NUNCA uses nombres genéricos ficticios como "Empresa Estratégica".
-2. Extrae el puesto o rol exacto${detectedRole ? ` (Usa "${detectedRole}")` : ''}.
-3. Redacta una Carta de Presentación de 3 párrafos de alto impacto dirigida a la empresa y puesto concretos, con tono ejecutivo, seguro, persuasivo y formal. Menciona con naturalidad los 5 años en Savills Málaga y cómo su experiencia en ADE + ESIC genera valor inmediato en los retos concretos de este puesto.
-4. Redacta un Resumen Ejecutivo ATS para el CV (3-4 líneas) totalmente orientado a las palabras clave y requisitos de esta oferta destacando su bagaje en Savills Málaga.
-5. Redacta el encaje estratégico (whyIgnacioFits) en 3 frases contundentes.
 
 Responde EXCLUSIVAMENTE con un JSON válido con esta estructura:
 {
   "name": "${detectedCompany || 'Nombre exacto de la empresa'}",
-  "category": "Sector de la empresa (ej: Supermercados & Gran Distribución / Real Estate / Logística / Proptech / Operaciones)",
-  "location": "${meta.location || 'Málaga / Costa del Sol'}",
+  "category": "Sector de la empresa (ej: Supermercados & Gran Distribución / Real Estate / Logística / Fintech / Proptech / Operaciones)",
+  "location": "${meta.location || 'Málaga, España'}",
   "priority": "alta",
-  "contactTarget": "${url || 'portal de empleo'}",
-  "channel": "${(url && url.includes('@')) ? 'direct_email' : 'portal'}",
-  "companyInfo": "Radiografía y modelo de negocio de la empresa (2 frases concisas y fundamentadas)",
-  "currentState": "Momento actual, retos 2026, plan de crecimiento o contexto en Málaga (2 frases concisas)",
+  "contactTarget": "${url}",
+  "channel": "portal",
+  "companyInfo": "Radiografía y modelo de negocio (2 frases concisas)",
+  "currentState": "Momento actual, retos o contexto en Málaga (2 frases concisas)",
   "roleName": "${detectedRole || 'Puesto o vacante'}",
-  "keyRequirements": "Requisitos clave y funciones principales de la vacante",
-  "defaultRole": "area_manager_retail_ops",
-  "whyIgnacioFits": "Argumento de por qué Ignacio encaja al 100%: combinación de ADE + Savills Málaga, conocimiento de suelo y locales en Costa del Sol, rigor en Due Diligence, operaciones y negociación (3 frases)",
-  "tailoredSummary": "Resumen ejecutivo ATS de 3-4 líneas totalmente adaptado a los requisitos.",
-  "tailoredCoverLetter": "Estimado/a Responsable de Selección de [Empresa]:\\n\\n[Párrafo 1: Candidatura para el puesto y alineación estratégica...]\\n\\n[Párrafo 2: Logros cuantitativos en Savills Málaga y formación ADE/ESIC aplicables a las responsabilidades...]\\n\\n[Párrafo 3: Por qué puedo aportar valor inmediato y propuesta de entrevista...]\\n\\nUn cordial saludo,\\nIgnacio Fernández López"
+  "keyRequirements": "Requisitos clave y funciones principales",
+  "defaultRole": "slug del rol más afín: area_manager_retail_ops, real_estate_valuation_advisory, expansion_location_manager, operations_director_services, proptech_business_development, investment_analyst_capital_markets, technical_property_manager"
 }
 `;
 
-    parsedResult = await requestGeminiModels(
-      AI_GENERATION_MODELS,
-      consolidatedPrompt,
+    const scanData = await requestGeminiModels(
+      SCAN_AI_MODELS,
+      scanPrompt,
       (msg) => { aiProgressText.textContent = msg; },
-      'Analizando oferta y adaptando candidatura...'
+      'Escaneando oferta y analizando vacante...'
     );
+
+    // Stage 2: Deep synthesis of tailored CV and Cover Letter with Gemini 2.5 Pro
+    const companyTargetName = scanData.name || detectedCompany || 'la empresa';
+    const roleTargetName = scanData.roleName || detectedRole || 'el puesto';
+
+    const genPrompt = `
+Eres un Headhunter Senior y consultor de talento de alto nivel en España.
+Redacta una adaptación exhaustiva, profesional y de máximo impacto para la candidatura de Ignacio Fernández López (Nacho).
+
+DATOS DE LA VACANTE:
+- Empresa: ${companyTargetName}
+- Puesto: ${roleTargetName}
+- Sector: ${scanData.category || ''}
+- Ubicación: ${scanData.location || ''}
+- Requisitos: ${scanData.keyRequirements || ''}
+
+PERFIL PROFESIONAL DE IGNACIO FERNÁNDEZ LÓPEZ:
+- Graduado en ADE (Universidad de Málaga)
+- Máster GESCO en Dirección Comercial y Marketing (ESIC Business & Marketing School)
+- Máster Savills University
+- 5 años de trayectoria consolidada en Savills Málaga (consultoría inmobiliaria estratégica, Due Diligence técnica y urbanística, Project Management, optimización de cuentas de resultados P&L, dirección operativa de activos y negociación comercial)
+
+DIRECTRICES:
+1. Carta de Presentación de 3 párrafos de alto impacto dirigida explícitamente a "${companyTargetName}" para "${roleTargetName}".
+2. Resumen ejecutivo ATS para el CV (3-4 líneas) adaptado al puesto destacando su bagaje en Savills Málaga.
+3. Encaje estratégico (whyIgnacioFits) en 3 frases contundentes.
+
+Responde EXCLUSIVAMENTE con un JSON válido con esta estructura:
+{
+  "whyIgnacioFits": "Argumento de por qué Ignacio encaja al 100% en ${companyTargetName} (3 frases)",
+  "tailoredSummary": "Resumen ejecutivo ATS de 3-4 líneas totalmente adaptado.",
+  "tailoredCoverLetter": "Estimado/a Responsable de Selección de ${companyTargetName}:\\n\\n[Párrafo 1: Motivación y candidatura para ${roleTargetName}...]\\n\\n[Párrafo 2: Logros cuantitativos en Savills Málaga y formación ADE/ESIC aplicables a las responsabilidades...]\\n\\n[Párrafo 3: Por qué puedo aportar valor inmediato y propuesta de entrevista...]\\n\\nUn cordial saludo,\\nIgnacio Fernández López"
+}
+`;
+
+    const genData = await requestGeminiModels(
+      GENERATION_AI_MODELS,
+      genPrompt,
+      (msg) => { aiProgressText.textContent = msg; },
+      'Preparando CV y Carta de Presentación adaptados...'
+    );
+
+    parsedResult = {
+      ...scanData,
+      ...genData
+    };
   } catch (err) {
     console.warn('AI execution note, aplicando analizador integrado:', err);
     parsedResult = fallbackParseOffer(url, finalDescription, {
@@ -1427,9 +1593,6 @@ Responde EXCLUSIVAMENTE con un JSON válido con esta estructura:
 
   // Reset form
   if (inputOfferUrl) inputOfferUrl.value = '';
-  if (inputOfferCompany) inputOfferCompany.value = '';
-  if (inputOfferRole) inputOfferRole.value = '';
-  if (inputOfferText) inputOfferText.value = '';
   closeAddOfferModal();
 
   // Open detail view
@@ -1441,7 +1604,7 @@ Responde EXCLUSIVAMENTE con un JSON válido con esta estructura:
 function fallbackParseOffer(url, text, meta = {}) {
   let companyName = meta.company || "";
   let roleName = meta.role || "";
-  let category = "Supermercados & Gran Distribución";
+  let category = "Oportunidad Estratégica";
   let defaultRole = 'area_manager_retail_ops';
 
   const lines = (text || '').split('\n').map(l => l.trim()).filter(Boolean);
@@ -1469,11 +1632,11 @@ function fallbackParseOffer(url, text, meta = {}) {
   } else if (lower.includes('expansion') || lower.includes('locales') || lower.includes('franquicia')) {
     category = 'Expansión & Real Estate Comercial';
     defaultRole = 'expansion_location_manager';
-  } else if (lower.includes('proptech') || lower.includes('saas') || lower.includes('crm') || lower.includes('software')) {
-    category = 'Proptech & Nuevas Tecnologías';
+  } else if (lower.includes('proptech') || lower.includes('saas') || lower.includes('crm') || lower.includes('software') || lower.includes('qa') || lower.includes('engineer') || lower.includes('developer')) {
+    category = 'Tecnología & Nuevas Soluciones';
     defaultRole = 'proptech_business_development';
-  } else if (lower.includes('inversion') || lower.includes('capital') || lower.includes('financiero') || lower.includes('asset')) {
-    category = 'Inversión & Capital Markets';
+  } else if (lower.includes('inversion') || lower.includes('capital') || lower.includes('financiero') || lower.includes('asset') || lower.includes('bank') || lower.includes('fintech')) {
+    category = 'Servicios Financieros & Capital Markets';
     defaultRole = 'investment_analyst_capital_markets';
   } else {
     category = 'Operaciones & Gestión';
