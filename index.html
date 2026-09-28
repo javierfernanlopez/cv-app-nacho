@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CV Suite Neo-Brutalist — Ignacio Fernández López</title>
-  <link rel="stylesheet" href="styles.css?v=2">
-  <link rel="stylesheet" href="src/styles.css?v=2">
-  <link rel="stylesheet" href="/src/styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=3">
+  <link rel="stylesheet" href="src/styles.css?v=3">
+  <link rel="stylesheet" href="/src/styles.css?v=3">
   <style>
 /* NEO-BRUTALIST INLINE CORE FOR ZERO-FAIL RENDERING */
 :root {
@@ -833,6 +833,7 @@ li {
   body {
     background-size: 16px 16px;
     -webkit-tap-highlight-color: transparent;
+    padding-bottom: 75px !important;
   }
 
   /* TOP HEADER BAR */
@@ -1288,6 +1289,496 @@ li {
     min-height: auto !important;
   }
 }
+
+/* ============================================================ */
+/* MOBILE BOTTOM NAVIGATION BAR                                */
+/* ============================================================ */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 62px;
+  background: #FFFFFF;
+  border-top: 3.5px solid var(--neo-border);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+  z-index: 1000;
+  justify-content: space-around;
+  align-items: center;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.bottom-nav-item {
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--neo-text-muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  flex: 1;
+  height: 100%;
+}
+
+.bottom-nav-item .nav-icon {
+  font-size: 19px;
+  line-height: 1;
+}
+
+.bottom-nav-item.active {
+  color: var(--neo-text);
+}
+
+.bottom-nav-item.active .nav-icon {
+  transform: scale(1.15);
+}
+
+.bottom-nav-item.nav-item-add {
+  position: relative;
+  top: -8px;
+}
+
+.bottom-nav-item.nav-item-add .nav-icon-circle {
+  background: var(--neo-yellow);
+  border: 2.5px solid var(--neo-border);
+  box-shadow: 2.5px 2.5px 0px var(--neo-border);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--neo-text);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bottom-nav-item.nav-item-add:active .nav-icon-circle {
+  transform: translate(1.5px, 1.5px);
+  box-shadow: 1px 1px 0px var(--neo-border);
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+  }
+}
+
+/* ============================================================ */
+/* STRATEGIC BRIEFING CARD (IMMEDIATELY VISIBLE IN DETAIL VIEW) */
+/* ============================================================ */
+.company-briefing-card {
+  width: 100%;
+  max-width: 820px;
+  margin: 0 auto 20px auto;
+  background: #FFFFFF;
+  border: 3.5px solid var(--neo-border);
+  box-shadow: 5px 5px 0px var(--neo-border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.briefing-card-inner {
+  display: flex;
+  flex-direction: column;
+}
+
+.briefing-top-bar {
+  padding: 12px 18px;
+  background: #fffbeb;
+  border-bottom: 2.5px solid var(--neo-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.briefing-kicker {
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #b45309;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.briefing-name {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--neo-text);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.briefing-meta-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-custom-offer {
+  background: var(--neo-purple);
+  color: #000;
+  border: 1.5px solid var(--neo-border);
+  box-shadow: 1.5px 1.5px 0px var(--neo-border);
+  font-size: 10px;
+  font-weight: 900;
+  padding: 3px 7px;
+  border-radius: 4px;
+}
+
+.btn-briefing-collapse {
+  background: #FFFFFF;
+  color: var(--neo-text);
+  border: 2px solid var(--neo-border);
+  box-shadow: 2px 2px 0px var(--neo-border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-weight: 900;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.briefing-body {
+  padding: 16px 18px;
+}
+
+.briefing-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+.briefing-col {
+  padding: 12px 14px;
+  border: 2px solid var(--neo-border);
+  box-shadow: 3px 3px 0px var(--neo-border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.briefing-col-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.briefing-col-header h4 {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin: 0;
+  color: var(--neo-text);
+}
+
+.briefing-col-profile {
+  background: #f0f9ff;
+  border-left: 5px solid var(--neo-cyan);
+}
+
+.briefing-col-state {
+  background: #fefce8;
+  border-left: 5px solid var(--neo-yellow);
+}
+
+.briefing-col-fit {
+  background: #f0fdf4;
+  border-left: 5px solid var(--neo-green);
+}
+
+.briefing-text {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #1f2937;
+  text-align: justify;
+  margin: 0;
+}
+
+.fit-highlight {
+  color: #065f46;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.briefing-quick-meta {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #cbd5e1;
+  font-size: 11px;
+  color: #475569;
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.briefing-strengths-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.strength-chip {
+  background: #FFFFFF;
+  border: 1.5px solid #86efac;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 10px;
+  color: #14532d;
+  font-weight: 600;
+}
+
+/* ============================================================ */
+/* MODAL OVERLAY & DIALOG (AÑADIR OFERTA / GEMINI IA)           */
+/* ============================================================ */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-dialog {
+  background: #FFFFFF;
+  border: 3.5px solid var(--neo-border);
+  box-shadow: 8px 8px 0px var(--neo-border);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 620px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  animation: modalPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes modalPop {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.modal-header {
+  padding: 16px 20px 12px 20px;
+  border-bottom: 2.5px solid var(--neo-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: #FFFDEB;
+}
+
+.modal-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  background: var(--neo-yellow);
+  border: 1.5px solid var(--neo-border);
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--neo-text);
+  margin: 0;
+}
+
+.modal-close-btn {
+  background: #FFFFFF;
+  border: 2px solid var(--neo-border);
+  box-shadow: 2px 2px 0px var(--neo-border);
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: 900;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.modal-close-btn:hover {
+  background: var(--neo-pink);
+  color: #FFFFFF;
+}
+
+.modal-body {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-intro {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #374151;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-left: 4px solid var(--neo-cyan);
+  padding: 10px 14px;
+  border-radius: 6px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-label {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--neo-text);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.form-help {
+  font-size: 11px;
+  color: var(--neo-text-muted);
+  font-weight: 500;
+}
+
+.input-with-action {
+  display: flex;
+  gap: 8px;
+}
+
+.neo-input, .neo-textarea, .neo-select {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 9px 12px;
+  border: 2px solid var(--neo-border);
+  box-shadow: 2px 2px 0px var(--neo-border);
+  border-radius: 6px;
+  background: #FFFFFF;
+  color: var(--neo-text);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.neo-input:focus, .neo-textarea:focus, .neo-select:focus {
+  border-color: #2563eb;
+  box-shadow: 3px 3px 0px var(--neo-border);
+}
+
+.neo-textarea {
+  resize: vertical;
+  min-height: 85px;
+  line-height: 1.45;
+}
+
+/* AI Config Accordion */
+.ai-config-panel {
+  background: #fefce8;
+  border: 2px solid var(--neo-border);
+  box-shadow: 2px 2px 0px var(--neo-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ai-config-header {
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  user-select: none;
+  background: #fef08a;
+}
+
+.badge-ai-model {
+  background: #000;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.badge-api-status {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #166534;
+}
+
+.ai-config-body {
+  padding: 12px 14px;
+  border-top: 2px solid var(--neo-border);
+  background: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Progress Spinner */
+.ai-scan-progress {
+  background: #ecfdf5;
+  border: 2px solid #059669;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-spinner {
+  font-size: 22px;
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.progress-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: #065f46;
+}
+
+.modal-footer {
+  padding: 14px 20px;
+  border-top: 2.5px solid var(--neo-border);
+  background: #f8fafc;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
   </style>
 </head>
 <body>
@@ -1303,8 +1794,11 @@ li {
       <span id="cloudSyncBadge" class="badge-sync" title="Estado sincronizado en la nube">
         ☁️ Sincronizado en la nube
       </span>
+      <button id="openAddOfferBtn" class="btn-neo btn-neo-yellow" style="margin-left: 6px;">
+        ✨ Añadir Oferta (IA)
+      </button>
       <span style="font-size: 12px; font-weight: 800; color: var(--neo-text-muted);">
-        🎯 58 Empresas en Málaga (Supermercados, Retail, Sedes Corporativas y Negocio)
+        🎯 58 Empresas en Málaga (Supermercados, Retail, Sedes Corporativas)
       </span>
     </div>
   </header>
@@ -1394,7 +1888,6 @@ li {
           <button class="nav-tab-btn active" data-subtab="cv">📄 CV</button>
           <button class="nav-tab-btn" data-subtab="letter">✉️ Carta</button>
           <button class="nav-tab-btn" data-subtab="pitch">💬 Email Pitch</button>
-          <button class="nav-tab-btn" data-subtab="intel">🏢 Radiografía & Por qué Ignacio</button>
         </div>
       </div>
 
@@ -1421,6 +1914,11 @@ li {
 
     <!-- Content Workspace Canvas -->
     <div class="detail-content-canvas">
+      
+      <!-- Company Strategic Briefing Card (Immediately visible when accessing the company) -->
+      <div id="companyBriefingCard" class="company-briefing-card no-print">
+        <!-- Rendered dynamically by app.js -->
+      </div>
       
       <!-- Compact Document Controls Bar directly above A4 paper -->
       <div class="doc-controls-bar no-print" id="docControlsBar">
@@ -1450,22 +1948,132 @@ li {
       <div id="pitchView" class="pitch-container" style="display: none;">
         <!-- Rendered dynamically -->
       </div>
-      <div id="intelView" class="intel-container" style="display: none;">
-        <!-- Rendered dynamically -->
-      </div>
     </div>
 
   </section>
 
   <div id="toast" class="toast">Notificación</div>
 
+  <!-- Mobile Bottom Navigation Bar (WebApp Android / iOS) -->
+  <nav class="mobile-bottom-nav no-print" id="mobileBottomNav">
+    <button class="bottom-nav-item active" id="navBtnDashboard" title="Ver Empresas">
+      <span class="nav-icon">🏢</span>
+      <span class="nav-label">Empresas</span>
+    </button>
+    <button class="bottom-nav-item nav-item-add" id="navBtnAddOffer" title="Añadir Oferta con IA">
+      <span class="nav-icon-circle">➕</span>
+      <span class="nav-label">Añadir</span>
+    </button>
+    <button class="bottom-nav-item" id="navBtnMetrics" title="Métricas">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Métricas</span>
+    </button>
+    <button class="bottom-nav-item" id="navBtnAiSettings" title="Configurar IA">
+      <span class="nav-icon">✨</span>
+      <span class="nav-label">Gemini IA</span>
+    </button>
+  </nav>
+
+  <!-- Add Company / Job Offer Modal with Gemini IA -->
+  <div id="addOfferModal" class="modal-overlay no-print" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div>
+          <span class="modal-badge">✨ Inteligencia Artificial</span>
+          <h3 class="modal-title">Escanear Oferta o Añadir Empresa</h3>
+        </div>
+        <button class="modal-close-btn" id="closeAddOfferModalBtn" title="Cerrar">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-intro">
+          Pega el enlace de una vacante en <strong>LinkedIn</strong> o el texto de la oferta. 
+          La IA (<strong>Gemini Flash</strong>) analizará los requisitos, el momento actual de la empresa y adaptará automáticamente el CV y la Carta de Presentación de Ignacio.
+        </p>
+
+        <!-- Input 1: LinkedIn URL -->
+        <div class="form-group">
+          <label for="inputOfferUrl" class="form-label">
+            🔗 Enlace de LinkedIn o Portal de Empleo
+          </label>
+          <div class="input-with-action">
+            <input type="url" id="inputOfferUrl" class="neo-input" placeholder="https://www.linkedin.com/jobs/view/... o enlace de la vacante">
+            <button type="button" id="btnAutoScanUrl" class="btn-neo btn-neo-cyan" style="font-size: 11px;">
+              🔍 Auto-Escanear
+            </button>
+          </div>
+          <span class="form-help">Si LinkedIn solicita inicio de sesión, copia y pega el texto de la vacante abajo.</span>
+        </div>
+
+        <!-- Input 2: Job description text -->
+        <div class="form-group">
+          <label for="inputOfferText" class="form-label">
+            📝 Texto / Descripción de la Oferta (Opcional si usas enlace)
+          </label>
+          <textarea id="inputOfferText" class="neo-textarea" rows="4" placeholder="Pega aquí la descripción del puesto, empresa, requisitos o funciones si no tienes el enlace directo o si LinkedIn pide login..."></textarea>
+        </div>
+
+        <!-- AI Engine & Model Settings Accordion -->
+        <div class="ai-config-panel">
+          <div class="ai-config-header" id="toggleAiConfigBtn">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span>⚡ Motor IA:</span>
+              <span class="badge-ai-model" id="displayAiModel">Gemini 3.8 / 2.5 Flash</span>
+              <span class="badge-api-status" id="apiStatusBadge">🔑 API Key configurada</span>
+            </div>
+            <span id="aiConfigChevron">▼</span>
+          </div>
+
+          <div class="ai-config-body" id="aiConfigBody" style="display: none;">
+            <div class="form-group" style="margin-bottom: 8px;">
+              <label for="geminiApiKeyInput" class="form-label" style="font-size: 11px;">
+                Google Gemini API Key:
+              </label>
+              <input type="password" id="geminiApiKeyInput" class="neo-input" placeholder="AIzaSy...">
+              <div style="font-size: 10.5px; color: #52525b; margin-top: 4px;">
+                Consigue tu clave 100% gratuita en 
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #2563eb; font-weight: 700; text-decoration: underline;">Google AI Studio &rarr;</a>
+                (Se almacena de forma segura en tu navegador).
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="geminiModelSelect" class="form-label" style="font-size: 11px;">
+                Modelo de Gemini:
+              </label>
+              <select id="geminiModelSelect" class="neo-select">
+                <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (Recomendado / Ultrarrápido)</option>
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                <option value="gemini-3.8-flash-preview">Gemini 3.8 Flash (Preview)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status & Progress Indicator -->
+        <div id="aiScanProgress" class="ai-scan-progress" style="display: none;">
+          <div class="progress-spinner">⏳</div>
+          <div class="progress-text" id="aiProgressText">Analizando oferta con Gemini Flash...</div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-neo" id="cancelAddOfferBtn">Cancelar</button>
+        <button type="button" class="btn-neo btn-neo-green" id="btnSubmitAddOffer">
+          🚀 Analizar y Crear Candidatura
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Synchronous Data Bundle to guarantee zero fetch errors -->
-  <script src="data-bundle.js?v=2"></script>
-  <script src="src/data-bundle.js?v=2"></script>
-  <script src="/src/data-bundle.js?v=2"></script>
+  <script src="data-bundle.js?v=3"></script>
+  <script src="src/data-bundle.js?v=3"></script>
+  <script src="/src/data-bundle.js?v=3"></script>
   <!-- Application Controller -->
-  <script src="app.js?v=2"></script>
-  <script src="src/app.js?v=2"></script>
-  <script src="/src/app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
+  <script src="src/app.js?v=3"></script>
+  <script src="/src/app.js?v=3"></script>
 </body>
 </html>
